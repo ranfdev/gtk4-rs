@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gtk4/src/auto/column_view_row.rs`."><title>column_view_row.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gtk4" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (1a6ae3d69 2023-04-27)" data-search-js="search-618e954b235f6acc.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]-->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gtk4/src/auto/column_view_row.rs`."><title>column_view_row.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cb6f1f67f1bcd037.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gtk4" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (474709a9a 2023-08-03)" data-channel="nightly" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-6d2c9675f3d09c26.css" data-theme-dark-css="dark-45ceb8f2e522f4d1.css" data-theme-ayu-css="ayu-fd19013d6ce078bf.css" ><script src="../../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-6d2c9675f3d09c26.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-45ceb8f2e522f4d1.css"><link rel="stylesheet" href="../../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]-->
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", checkDocsLatestStable);
 
@@ -502,25 +502,184 @@
 <a href="#429" id="429">429</a>
 <a href="#430" id="430">430</a>
 <a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
 </pre></div><pre class="rust"><code><span class="comment">// This file was generated by gir (https://github.com/gtk-rs/gir)
 // from gir-files (https://github.com/gtk-rs/gir-files)
 // DO NOT EDIT
 
 </span><span class="kw">use </span>glib::{
-    prelude::<span class="kw-2">*</span>,
-    signal::{connect_raw, SignalHandlerId},
-    translate::<span class="kw-2">*</span>,
+    <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/prelude/index.html">prelude</a>::<span class="kw-2">*</span>,
+    signal::{<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>, <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a>},
+    <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/index.html">translate</a>::<span class="kw-2">*</span>,
 };
-<span class="kw">use </span>std::{boxed::Box <span class="kw">as </span>Box_, fmt, mem::transmute};
+<span class="kw">use </span>std::{<a href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html">boxed::Box</a> <span class="kw">as </span>Box_, <a href="https://doc.rust-lang.org/nightly/alloc/fmt/index.html">fmt</a>, <a href="https://doc.rust-lang.org/nightly/core/intrinsics/fn.transmute.html">mem::transmute</a>};
 
-<span class="macro">glib::wrapper! </span>{
+<a class="macro" href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/macro.wrapper.html">glib::wrapper! </a>{
     <span class="doccomment">/// [`ColumnViewRow`][crate::ColumnViewRow] is used by [`ColumnView`][crate::ColumnView] to allow configuring
     /// how rows are displayed.
     ///
     /// It is not used to set the widgets displayed in the individual cells. For that
-    /// see `GtkColumnViewColumn::set_factory()` and `GtkColumnViewCell`.
+    /// see `GtkColumnViewColumn::set_factory()` and [`ColumnViewCell`][crate::ColumnViewCell].
     ///
     /// ## Properties
+    ///
+    ///
+    /// #### `accessible-description`
+    ///  The accessible description to set on the row.
+    ///
+    /// Readable | Writeable
+    ///
+    ///
+    /// #### `accessible-label`
+    ///  The accessible label to set on the row.
+    ///
+    /// Readable | Writeable
     ///
     ///
     /// #### `activatable`
@@ -562,20 +721,50 @@
     ///
     /// [`trait@glib::ObjectExt`]
     </span><span class="attr">#[doc(alias = <span class="string">&quot;GtkColumnViewRow&quot;</span>)]
-    </span><span class="kw">pub struct </span>ColumnViewRow(Object&lt;ffi::GtkColumnViewRow, ffi::GtkColumnViewRowClass&gt;);
+    </span><span class="kw">pub struct </span><a href="../../../gtk4/struct.ColumnViewRow.html">ColumnViewRow</a>(Object&lt;<a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>, <a href="../../../gtk4_sys/type.GtkColumnViewRowClass.html">ffi::GtkColumnViewRowClass</a>&gt;);
 
     <span class="kw">match fn </span>{
         type_ =&gt; || ffi::gtk_column_view_row_get_type(),
     }
 }
 
-<span class="kw">impl </span>ColumnViewRow {
+<span class="kw">impl </span><a href="#12-78">ColumnViewRow</a> {
     <span class="comment">// rustdoc-stripper-ignore-next
     </span><span class="doccomment">/// Creates a new builder-pattern struct instance to construct [`ColumnViewRow`] objects.
     ///
     /// This method returns an instance of [`ColumnViewRowBuilder`](crate::builders::ColumnViewRowBuilder) which can be used to create [`ColumnViewRow`] objects.
-    </span><span class="kw">pub fn </span>builder() -&gt; ColumnViewRowBuilder {
+    </span><span class="kw">pub fn </span>builder() -&gt; <a href="#506-508">ColumnViewRowBuilder</a> {
         ColumnViewRowBuilder::new()
+    }
+
+    <span class="doccomment">/// Gets the accessible description of @self.
+    ///
+    /// # Returns
+    ///
+    /// the accessible description
+    </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_accessible_description&quot;</span>)]
+    #[doc(alias = <span class="string">&quot;get_accessible_description&quot;</span>)]
+    </span><span class="kw">pub fn </span>accessible_description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/gstring/struct.GString.html">glib::GString</a> {
+        <span class="kw">unsafe </span>{
+            from_glib_none(ffi::gtk_column_view_row_get_accessible_description(
+                <a class="self" href="#96">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+            ))
+        }
+    }
+
+    <span class="doccomment">/// Gets the accessible label of @self.
+    ///
+    /// # Returns
+    ///
+    /// the accessible label
+    </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_accessible_label&quot;</span>)]
+    #[doc(alias = <span class="string">&quot;get_accessible_label&quot;</span>)]
+    </span><span class="kw">pub fn </span>accessible_label(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/gstring/struct.GString.html">glib::GString</a> {
+        <span class="kw">unsafe </span>{
+            from_glib_none(ffi::gtk_column_view_row_get_accessible_label(
+                <a class="self" href="#111">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+            ))
+        }
     }
 
     <span class="doccomment">/// Checks if the row has been set to be activatable via
@@ -586,10 +775,10 @@
     /// [`true`] if the row is activatable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_activatable&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_activatable&quot;</span>)]
-    </span><span class="kw">pub fn </span>is_activatable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_activatable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a> {
         <span class="kw">unsafe </span>{
             from_glib(ffi::gtk_column_view_row_get_activatable(
-                <span class="self">self</span>.to_glib_none().<span class="number">0</span>,
+                <a class="self" href="#127">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
             ))
         }
     }
@@ -602,10 +791,10 @@
     /// [`true`] if the row is focusable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_focusable&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_focusable&quot;</span>)]
-    </span><span class="kw">pub fn </span>is_focusable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_focusable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a> {
         <span class="kw">unsafe </span>{
             from_glib(ffi::gtk_column_view_row_get_focusable(
-                <span class="self">self</span>.to_glib_none().<span class="number">0</span>,
+                <a class="self" href="#143">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
             ))
         }
     }
@@ -619,8 +808,8 @@
     /// The item displayed
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_item&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_item&quot;</span>)]
-    </span><span class="kw">pub fn </span>item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;glib::Object&gt; {
-        <span class="kw">unsafe </span>{ from_glib_none(ffi::gtk_column_view_row_get_item(<span class="self">self</span>.to_glib_none().<span class="number">0</span>)) }
+    </span><span class="kw">pub fn </span>item(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/struct.Object.html">glib::Object</a>&gt; {
+        <span class="kw">unsafe </span>{ from_glib_none(ffi::gtk_column_view_row_get_item(<a class="self" href="#160">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>)) }
     }
 
     <span class="doccomment">/// Gets the position in the model that @self currently displays.
@@ -632,8 +821,8 @@
     /// The position of this row
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_position&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_position&quot;</span>)]
-    </span><span class="kw">pub fn </span>position(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
-        <span class="kw">unsafe </span>{ ffi::gtk_column_view_row_get_position(<span class="self">self</span>.to_glib_none().<span class="number">0</span>) }
+    </span><span class="kw">pub fn </span>position(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a> {
+        <span class="kw">unsafe </span>{ ffi::gtk_column_view_row_get_position(<a class="self" href="#173">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>) }
     }
 
     <span class="doccomment">/// Checks if the row has been set to be selectable via
@@ -646,10 +835,10 @@
     /// [`true`] if the row is selectable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_selectable&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_selectable&quot;</span>)]
-    </span><span class="kw">pub fn </span>is_selectable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_selectable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a> {
         <span class="kw">unsafe </span>{
             from_glib(ffi::gtk_column_view_row_get_selectable(
-                <span class="self">self</span>.to_glib_none().<span class="number">0</span>,
+                <a class="self" href="#187">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
             ))
         }
     }
@@ -664,8 +853,36 @@
     /// [`true`] if the item is selected.
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_get_selected&quot;</span>)]
     #[doc(alias = <span class="string">&quot;get_selected&quot;</span>)]
-    </span><span class="kw">pub fn </span>is_selected(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">unsafe </span>{ from_glib(ffi::gtk_column_view_row_get_selected(<span class="self">self</span>.to_glib_none().<span class="number">0</span>)) }
+    </span><span class="kw">pub fn </span>is_selected(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a> {
+        <span class="kw">unsafe </span>{ from_glib(ffi::gtk_column_view_row_get_selected(<a class="self" href="#205">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>)) }
+    }
+
+    <span class="doccomment">/// Sets the accessible description for the row,
+    /// which may be used by e.g. screen readers.
+    /// ## `description`
+    /// the description
+    </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_set_accessible_description&quot;</span>)]
+    </span><span class="kw">pub fn </span>set_accessible_description(<span class="kw-2">&amp;</span><span class="self">self</span>, description: <span class="kw-2">&amp;</span><a href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) {
+        <span class="kw">unsafe </span>{
+            ffi::gtk_column_view_row_set_accessible_description(
+                <a class="self" href="#214">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+                <a href="#214">description</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+            );
+        }
+    }
+
+    <span class="doccomment">/// Sets the accessible label for the row,
+    /// which may be used by e.g. screen readers.
+    /// ## `label`
+    /// the label
+    </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_set_accessible_label&quot;</span>)]
+    </span><span class="kw">pub fn </span>set_accessible_label(<span class="kw-2">&amp;</span><span class="self">self</span>, label: <span class="kw-2">&amp;</span><a href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) {
+        <span class="kw">unsafe </span>{
+            ffi::gtk_column_view_row_set_accessible_label(
+                <a class="self" href="#228">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+                <a href="#228">label</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+            );
+        }
     }
 
     <span class="doccomment">/// Sets @self to be activatable.
@@ -679,11 +896,11 @@
     /// ## `activatable`
     /// if the row should be activatable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_set_activatable&quot;</span>)]
-    </span><span class="kw">pub fn </span>set_activatable(<span class="kw-2">&amp;</span><span class="self">self</span>, activatable: bool) {
+    </span><span class="kw">pub fn </span>set_activatable(<span class="kw-2">&amp;</span><span class="self">self</span>, activatable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) {
         <span class="kw">unsafe </span>{
             ffi::gtk_column_view_row_set_activatable(
-                <span class="self">self</span>.to_glib_none().<span class="number">0</span>,
-                activatable.into_glib(),
+                <a class="self" href="#248">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>,
+                <a href="#248">activatable</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.IntoGlib.html">into_glib</a>(),
             );
         }
     }
@@ -700,9 +917,9 @@
     /// ## `focusable`
     /// if the row should be focusable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_set_focusable&quot;</span>)]
-    </span><span class="kw">pub fn </span>set_focusable(<span class="kw-2">&amp;</span><span class="self">self</span>, focusable: bool) {
+    </span><span class="kw">pub fn </span>set_focusable(<span class="kw-2">&amp;</span><span class="self">self</span>, focusable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) {
         <span class="kw">unsafe </span>{
-            ffi::gtk_column_view_row_set_focusable(<span class="self">self</span>.to_glib_none().<span class="number">0</span>, focusable.into_glib());
+            ffi::gtk_column_view_row_set_focusable(<a class="self" href="#269">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>, <a href="#269">focusable</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.IntoGlib.html">into_glib</a>());
         }
     }
 
@@ -720,33 +937,88 @@
     /// ## `selectable`
     /// if the row should be selectable
     </span><span class="attr">#[doc(alias = <span class="string">&quot;gtk_column_view_row_set_selectable&quot;</span>)]
-    </span><span class="kw">pub fn </span>set_selectable(<span class="kw-2">&amp;</span><span class="self">self</span>, selectable: bool) {
+    </span><span class="kw">pub fn </span>set_selectable(<span class="kw-2">&amp;</span><span class="self">self</span>, selectable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) {
         <span class="kw">unsafe </span>{
-            ffi::gtk_column_view_row_set_selectable(<span class="self">self</span>.to_glib_none().<span class="number">0</span>, selectable.into_glib());
+            ffi::gtk_column_view_row_set_selectable(<a class="self" href="#289">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.ToGlibPtr.html">to_glib_none</a>().<span class="number">0</span>, <a href="#289">selectable</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/translate/trait.IntoGlib.html">into_glib</a>());
+        }
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
+    #[doc(alias = <span class="string">&quot;accessible-description&quot;</span>)]
+    </span><span class="kw">pub fn </span>connect_accessible_description_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        f: F,
+    ) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_accessible_description_trampoline&lt;
+            F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>,
+        &gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
+            _param_spec: glib::ffi::gpointer,
+            f: glib::ffi::gpointer,
+        ) {
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#307">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#309">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#305">this</a>))
+        }
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#300">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#299">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+                <span class="string">b&quot;notify::accessible-description\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
+                <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
+                    notify_accessible_description_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
+                )),
+                Box_::into_raw(<a href="#313">f</a>),
+            )
+        }
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
+    #[doc(alias = <span class="string">&quot;accessible-label&quot;</span>)]
+    </span><span class="kw">pub fn </span>connect_accessible_label_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_accessible_label_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
+            _param_spec: glib::ffi::gpointer,
+            f: glib::ffi::gpointer,
+        ) {
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#332">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#334">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#330">this</a>))
+        }
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#328">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#328">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+                <span class="string">b&quot;notify::accessible-label\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
+                <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
+                    notify_accessible_label_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
+                )),
+                Box_::into_raw(<a href="#338">f</a>),
+            )
         }
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;activatable&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_activatable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_activatable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_activatable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_activatable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#357">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#359">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#355">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#353">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#353">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::activatable\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_activatable_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#363">f</a>),
             )
         }
     }
@@ -754,24 +1026,24 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;focusable&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_focusable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_focusable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_focusable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_focusable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#382">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#384">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#380">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#378">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#378">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::focusable\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_focusable_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#388">f</a>),
             )
         }
     }
@@ -779,24 +1051,24 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;item&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_item_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_item_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_item_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_item_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#407">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#409">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#405">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#403">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#403">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::item\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_item_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#413">f</a>),
             )
         }
     }
@@ -804,24 +1076,24 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;position&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_position_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_position_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_position_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_position_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#432">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#434">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#430">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#428">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#428">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::position\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_position_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#438">f</a>),
             )
         }
     }
@@ -829,24 +1101,24 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;selectable&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_selectable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_selectable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_selectable_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_selectable_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#457">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#459">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#455">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#453">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#453">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::selectable\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_selectable_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#463">f</a>),
             )
         }
     }
@@ -854,24 +1126,24 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
     #[doc(alias = <span class="string">&quot;selected&quot;</span>)]
-    </span><span class="kw">pub fn </span>connect_selected_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; SignalHandlerId {
-        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_selected_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span>ColumnViewRow) + <span class="lifetime">&#39;static</span>&gt;(
-            this: <span class="kw-2">*mut </span>ffi::GtkColumnViewRow,
+    </span><span class="kw">pub fn </span>connect_selected_notify&lt;F: Fn(<span class="kw-2">&amp;</span><span class="self">Self</span>) + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/struct.SignalHandlerId.html">SignalHandlerId</a> {
+        <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>notify_selected_trampoline&lt;F: Fn(<span class="kw-2">&amp;</span><a href="#12-78">ColumnViewRow</a>) + <span class="lifetime">&#39;static</span>&gt;(
+            this: <span class="kw-2">*mut </span><a href="../../../gtk4_sys/struct.GtkColumnViewRow.html">ffi::GtkColumnViewRow</a>,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) {
-            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(f <span class="kw">as </span><span class="kw-2">*const </span>F);
-            f(<span class="kw-2">&amp;</span>from_glib_borrow(this))
+            <span class="kw">let </span>f: <span class="kw-2">&amp;</span>F = <span class="kw-2">&amp;*</span>(<a href="#482">f</a> <span class="kw">as </span><span class="kw-2">*const </span>F);
+            <a href="#484">f</a>(<span class="kw-2">&amp;</span>from_glib_borrow(<a href="#480">this</a>))
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(f);
-            connect_raw(
-                <span class="self">self</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
+            <span class="kw">let </span>f: Box_&lt;F&gt; = Box_::new(<a href="#478">f</a>);
+            <a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/signal/fn.connect_raw.html">connect_raw</a>(
+                <a class="self" href="#478">self</a>.<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/object/trait.ObjectType.html">as_ptr</a>() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
                 <span class="string">b&quot;notify::selected\0&quot;</span>.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
                 <span class="prelude-val">Some</span>(transmute::&lt;<span class="kw">_</span>, <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>()&gt;(
                     notify_selected_trampoline::&lt;F&gt; <span class="kw">as </span><span class="kw-2">*const </span>(),
                 )),
-                Box_::into_raw(f),
+                Box_::into_raw(<a href="#488">f</a>),
             )
         }
     }
@@ -882,55 +1154,77 @@
 ///
 /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html
 </span><span class="attr">#[must_use = <span class="string">&quot;The builder must be built to be used&quot;</span>]
-</span><span class="kw">pub struct </span>ColumnViewRowBuilder {
-    builder: glib::object::ObjectBuilder&lt;<span class="lifetime">&#39;static</span>, ColumnViewRow&gt;,
+</span><span class="kw">pub struct </span><a href="../../../gtk4/builders/struct.ColumnViewRowBuilder.html">ColumnViewRowBuilder</a> {
+    builder: glib::object::ObjectBuilder&lt;<span class="lifetime">&#39;static</span>, <a href="#12-78">ColumnViewRow</a>&gt;,
 }
 
-<span class="kw">impl </span>ColumnViewRowBuilder {
+<span class="kw">impl </span><a href="#506-508">ColumnViewRowBuilder</a> {
     <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             builder: glib::object::Object::builder(),
         }
     }
 
+    <span class="doccomment">/// The accessible description to set on the row.
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
+    </span><span class="kw">pub fn </span>accessible_description(<span class="self">self</span>, accessible_description: <span class="kw">impl </span>Into&lt;<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/gstring/struct.GString.html">glib::GString</a>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            builder: <span class="self"><a href="#520">self</a>
+                </span>.builder
+                .property(<span class="string">&quot;accessible-description&quot;</span>, <a href="#520">accessible_description</a>.<a href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html">into</a>()),
+        }
+    }
+
+    <span class="doccomment">/// The accessible label to set on the row.
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
+    </span><span class="kw">pub fn </span>accessible_label(<span class="self">self</span>, accessible_label: <span class="kw">impl </span>Into&lt;<a href="https://gtk-rs.org/gtk-rs-core/git/docs/glib/gstring/struct.GString.html">glib::GString</a>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            builder: <span class="self"><a href="#531">self</a>
+                </span>.builder
+                .property(<span class="string">&quot;accessible-label&quot;</span>, <a href="#531">accessible_label</a>.<a href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html">into</a>()),
+        }
+    }
+
     <span class="doccomment">/// If the row can be activated by the user.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
-    </span><span class="kw">pub fn </span>activatable(<span class="self">self</span>, activatable: bool) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>activatable(<span class="self">self</span>, activatable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            builder: <span class="self">self</span>.builder.property(<span class="string">&quot;activatable&quot;</span>, activatable),
+            builder: <a class="self" href="#542">self</a>.builder.property(<span class="string">&quot;activatable&quot;</span>, <a href="#542">activatable</a>),
         }
     }
 
     <span class="doccomment">/// If the row can be focused with the keyboard.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
-    </span><span class="kw">pub fn </span>focusable(<span class="self">self</span>, focusable: bool) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>focusable(<span class="self">self</span>, focusable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            builder: <span class="self">self</span>.builder.property(<span class="string">&quot;focusable&quot;</span>, focusable),
+            builder: <a class="self" href="#551">self</a>.builder.property(<span class="string">&quot;focusable&quot;</span>, <a href="#551">focusable</a>),
         }
     }
 
     <span class="doccomment">/// If the row can be selected by the user.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;v4_12&quot;</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;v4_12&quot;</span>)))]
-    </span><span class="kw">pub fn </span>selectable(<span class="self">self</span>, selectable: bool) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>selectable(<span class="self">self</span>, selectable: <a href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            builder: <span class="self">self</span>.builder.property(<span class="string">&quot;selectable&quot;</span>, selectable),
+            builder: <a class="self" href="#560">self</a>.builder.property(<span class="string">&quot;selectable&quot;</span>, <a href="#560">selectable</a>),
         }
     }
 
     <span class="comment">// rustdoc-stripper-ignore-next
     </span><span class="doccomment">/// Build the [`ColumnViewRow`].
     </span><span class="attr">#[must_use = <span class="string">&quot;Building the object from the builder is usually expensive and is not expected to have side effects&quot;</span>]
-    </span><span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; ColumnViewRow {
-        <span class="self">self</span>.builder.build()
+    </span><span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; <a href="#12-78">ColumnViewRow</a> {
+        <a class="self" href="#569">self</a>.builder.build()
     }
 }
 
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>ColumnViewRow {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        f.write_str(<span class="string">&quot;ColumnViewRow&quot;</span>)
+<span class="kw">impl </span><a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html">fmt::Display</a> <span class="kw">for </span><a href="#12-78">ColumnViewRow</a> {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span><a href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html">fmt::Formatter</a>) -&gt; <a href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html">fmt::Result</a> {
+        <a href="#575">f</a>.write_str(<span class="string">&quot;ColumnViewRow&quot;</span>)
     }
 }
 </code></pre></div></section></main></body></html>
