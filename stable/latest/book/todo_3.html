@@ -89,11 +89,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -282,7 +304,7 @@ fn build_ui(app: &amp;adw::Application) {
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -506,7 +528,6 @@ The member variable <code>tasks_list</code> now describes a <code>ListBox</code>
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -566,15 +587,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -603,7 +623,6 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -681,7 +700,7 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -755,11 +774,12 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -838,7 +858,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -916,7 +935,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -990,11 +1009,12 @@ That means we can just bind their properties without having to worry about unbin
         // Bind properties
         task_object
             .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+            .bidirectional()
+            .sync_create()
             .build();
         task_object
             .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
 
         // Return row
@@ -1070,7 +1090,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -1148,7 +1167,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -1222,11 +1241,12 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -1302,7 +1322,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -1380,7 +1399,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -1454,11 +1473,12 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row

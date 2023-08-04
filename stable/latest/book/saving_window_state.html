@@ -89,11 +89,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -258,7 +280,6 @@ Until it hits stable, we will add it as external dependency.</p>
 <p>We also override the <code>constructed</code> and <code>close_request</code> methods, where we load or save the window state. </p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/saving_window_state/1/custom_window/imp.rs">listings/saving_window_state/1/custom_window/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, ApplicationWindow};
 </span><span class="boring">use once_cell::sync::OnceCell;
@@ -286,14 +307,13 @@ impl ObjectImpl for Window {
 impl WidgetImpl for Window {}
 impl WindowImpl for Window {
     // Save window state right before the window will be closed
-    fn close_request(&amp;self) -&gt; Inhibit {
+    fn close_request(&amp;self) -&gt; glib::ControlFlow {
         // Save window size
         self.obj()
             .save_window_size()
             .expect(&quot;Failed to save window state&quot;);
 
-        // Don't inhibit the default handler
-        Inhibit(false)
+        glib::ControlFlow::Continue
     }
 }
 impl ApplicationWindowImpl for Window {}</code></pre>

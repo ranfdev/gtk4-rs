@@ -89,11 +89,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -290,7 +312,6 @@ For example, the parent type of our window is now <code>adw::ApplicationWindow</
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -351,15 +372,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -385,7 +405,6 @@ impl ObjectSubclass for Window {
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -446,15 +465,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -482,7 +500,6 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -561,7 +578,7 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -635,11 +652,12 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -802,7 +820,7 @@ As usual, the full implementation can be seen by clicking at the eye symbol at t
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
-</span><span class="boring">use glib::{ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::{gio, glib};
 </span><span class="boring">use once_cell::sync::OnceCell;
 </span><span class="boring">
@@ -824,24 +842,13 @@ impl ObjectSubclass for CollectionObject {
 }
 <span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
-</span><span class="boring">impl ObjectImpl for CollectionObject {
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">}</span></code></pre>
+</span><span class="boring">#[glib::derived_properties]
+</span><span class="boring">impl ObjectImpl for CollectionObject {}</span></code></pre>
 <p>We also add the struct <code>CollectionData</code> to aid in serialization and deserialization.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/8/collection_object/mod.rs">listings/todo/8/collection_object/mod.rs</a></p>
 <pre><code class="language-rust no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use adw::prelude::{ListModelExtManual, *};
+</span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::{gio, glib};
@@ -865,12 +872,10 @@ impl ObjectSubclass for CollectionObject {
 </span><span class="boring">        let title = self.imp().title.borrow().clone();
 </span><span class="boring">        let tasks_data = self
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
-</span><span class="boring">
 </span><span class="boring">        CollectionData { title, tasks_data }
 </span><span class="boring">    }
 </span><span class="boring">
@@ -882,7 +887,7 @@ impl ObjectSubclass for CollectionObject {
 </span><span class="boring">            .map(TaskObject::from_task_data)
 </span><span class="boring">            .collect();
 </span><span class="boring">
-</span><span class="boring">        let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">        tasks.extend_from_slice(&amp;tasks_to_extend);
 </span><span class="boring">
 </span><span class="boring">        Self::new(&amp;title, tasks)
@@ -903,7 +908,7 @@ pub struct CollectionData {
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/8/collection_object/mod.rs">listings/todo/8/collection_object/mod.rs</a></p>
 <pre><code class="language-rust no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use adw::prelude::{ListModelExtManual, *};
+</span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::{gio, glib};
@@ -927,12 +932,10 @@ pub struct CollectionData {
         let title = self.imp().title.borrow().clone();
         let tasks_data = self
             .tasks()
-            .snapshot()
-            .iter()
-            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-            .map(TaskObject::task_data)
+            .iter::&lt;TaskObject&gt;()
+            .filter_map(Result::ok)
+            .map(|task_object| task_object.task_data())
             .collect();
-
         CollectionData { title, tasks_data }
     }
 
@@ -944,7 +947,7 @@ pub struct CollectionData {
             .map(TaskObject::from_task_data)
             .collect();
 
-        let tasks = gio::ListStore::new(TaskObject::static_type());
+        let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
         tasks.extend_from_slice(&amp;tasks_to_extend);
 
         Self::new(&amp;title, tasks)
@@ -970,7 +973,6 @@ Its purpose will become clear in later snippets.</p>
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -1043,15 +1045,14 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;CollectionData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .collections()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-</span><span class="boring">            .map(CollectionObject::to_collection_data)
+</span><span class="boring">            .iter::&lt;CollectionObject&gt;()
+</span><span class="boring">            .filter_map(|collection_object| collection_object.ok())
+</span><span class="boring">            .map(|collection_object| collection_object.to_collection_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -1080,7 +1081,6 @@ pub struct Window {
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -1182,7 +1182,7 @@ pub struct Window {
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -1235,7 +1235,7 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -1309,11 +1309,12 @@ pub struct Window {
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -1501,7 +1502,7 @@ pub struct Window {
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -1528,7 +1529,6 @@ Since most of the implementation is in the method <code>CollectionObject::to_col
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -1601,15 +1601,14 @@ Since most of the implementation is in the method <code>CollectionObject::to_col
 </span><span class="boring">
 </span>// Trait shared by all windows
 impl WindowImpl for Window {
-    fn close_request(&amp;self) -&gt; Inhibit {
+    fn close_request(&amp;self) -&gt; glib::ControlFlow {
         // Store task data in vector
         let backup_data: Vec&lt;CollectionData&gt; = self
             .obj()
             .collections()
-            .snapshot()
-            .iter()
-            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-            .map(CollectionObject::to_collection_data)
+            .iter::&lt;CollectionObject&gt;()
+            .filter_map(|collection_object| collection_object.ok())
+            .map(|collection_object| collection_object.to_collection_data())
             .collect();
 
         // Save state to file
@@ -1637,7 +1636,6 @@ Instead of <code>setup_tasks</code> we now call <code>setup_collections</code>.<
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -1710,15 +1708,14 @@ impl ObjectImpl for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;CollectionData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .collections()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-</span><span class="boring">            .map(CollectionObject::to_collection_data)
+</span><span class="boring">            .iter::&lt;CollectionObject&gt;()
+</span><span class="boring">            .filter_map(|collection_object| collection_object.ok())
+</span><span class="boring">            .map(|collection_object| collection_object.to_collection_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -1748,7 +1745,6 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -1850,7 +1846,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span>    fn setup_collections(&amp;self) {
-        let collections = gio::ListStore::new(CollectionObject::static_type());
+        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
         self.imp()
             .collections
             .set(collections.clone())
@@ -1903,7 +1899,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -1977,11 +1973,12 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -2169,7 +2166,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -2197,7 +2194,6 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -2299,7 +2295,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -2352,7 +2348,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 
         collection_object
             .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-            .flags(glib::BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
 
         ListBoxRow::builder().child(&amp;label).build()
@@ -2426,11 +2422,12 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -2618,7 +2615,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -2649,7 +2646,6 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -2751,7 +2747,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -2804,7 +2800,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -2878,11 +2874,12 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -3070,7 +3067,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -3104,7 +3101,6 @@ Finally, we select the collection row.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -3206,7 +3202,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -3259,7 +3255,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -3333,11 +3329,12 @@ Finally, we select the collection row.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -3525,7 +3522,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -3554,7 +3551,6 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -3656,7 +3652,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -3709,7 +3705,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -3783,11 +3779,12 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -3975,7 +3972,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -4003,7 +4000,6 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -4105,7 +4101,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -4158,7 +4154,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -4232,11 +4228,12 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -4424,7 +4421,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -4469,7 +4466,6 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -4571,7 +4567,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -4624,7 +4620,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -4698,11 +4694,12 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -4890,7 +4887,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -4924,7 +4921,6 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -5026,7 +5022,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -5079,7 +5075,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -5153,11 +5149,12 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -5345,7 +5342,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
                 }
 
                 // Create a new list store
-                let tasks = gio::ListStore::new(TaskObject::static_type());
+                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 
                 // Create a new collection object from the title the user provided
                 let title = entry.text().to_string();
@@ -5379,7 +5376,6 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -5481,7 +5477,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -5534,7 +5530,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -5608,11 +5604,12 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -5800,7 +5797,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -5829,7 +5826,6 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -5931,7 +5927,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -5984,7 +5980,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -6058,11 +6054,12 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -6250,7 +6247,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();

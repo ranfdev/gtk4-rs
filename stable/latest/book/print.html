@@ -90,11 +90,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -312,9 +334,7 @@ cmake --install build
 cd /
 
 cd librsvg/win32
-where python
-nmake /f generate-msvc.mak generate-nmake-files PYTHON=&lt;output from last command&gt;
-xcopy /s C:\gnome\include\cairo C:\gnome\include
+nmake /f generate-msvc.mak generate-nmake-files
 nmake /f Makefile.vc CFG=release install PREFIX=C:\gnome
 cd /
 </code></pre>
@@ -1180,7 +1200,7 @@ impl CustomButton {
 </span><span class="boring">}</span></code></pre>
 <p><a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/macro.wrapper.html"><code>glib::wrapper!</code></a> implements the same traits that our <code>ParentType</code> implements.
 Theoretically that would mean that the <code>ParentType</code> is also the only thing we have to specify here.
-Unfortunately, nobody found yet a good way to do that.
+Unfortunately, nobody has yet found a good way to do that.
 Which is why, as of today, subclassing of GObjects in Rust requires to mention all ancestors and interfaces apart from <code>GObject</code> and <code>GInitiallyUnowned</code>.
 For <code>gtk::Button</code>, we can look up the ancestors and interfaces in the corresponding <a href="https://docs.gtk.org/gtk4/class.Button.html#hierarchy">doc page</a> of GTK4.</p>
 <p>After these steps, nothing is stopping us from replacing <code>gtk::Button</code> with our <code>CustomButton</code>.</p>
@@ -1543,9 +1563,9 @@ More examples can be found in the <a href="https://gtk-rs.org/gtk-rs-core/stable
 <div style="break-before: page; page-break-before: always;"></div><h1 id="properties"><a class="header" href="#properties">Properties</a></h1>
 <p>Properties provide a public API for accessing state of GObjects.</p>
 <p>Let's see how this is done by experimenting with the <a href="https://gtk-rs.org/gtk4-rs/stable/latest/docs/gtk4/struct.Switch.html"><code>Switch</code></a> widget.
-One of its properties is the <a href="https://docs.gtk.org/gtk4/property.Switch.state.html">state</a>.
+One of its properties is called <a href="../docs/gtk4/struct.Switch.html#active">active</a>.
 According to the GTK docs, it can be read and be written to.
-That is why <code>gtk-rs</code> provides corresponding <a href="../docs/gtk4/struct.Switch.html#method.state"><code>state</code></a> and <a href="../docs/gtk4/struct.Switch.html#method.set_state"><code>set_state</code></a> methods.</p>
+That is why <code>gtk-rs</code> provides corresponding <a href="../docs/gtk4/struct.Switch.html#method.is_active"><code>is_active</code></a> and <a href="../docs/gtk4/struct.Switch.html#method.set_active"><code>set_active</code></a> methods.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/g_object_properties/1/main.rs">listings/g_object_properties/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation, Switch};
@@ -1567,12 +1587,12 @@ That is why <code>gtk-rs</code> provides corresponding <a href="../docs/gtk4/str
 </span>    // Create the switch
     let switch = Switch::new();
 
-    // Set and then immediately obtain state
-    switch.set_state(true);
-    let current_state = switch.state();
+    // Set and then immediately obtain active property
+    switch.set_active(true);
+    let switch_active = switch.is_active();
 
-    // This prints: &quot;The current state is true&quot;
-    println!(&quot;The current state is {}&quot;, current_state);
+    // This prints: &quot;The active property of switch is true&quot;
+    println!(&quot;The active property of switch is {}&quot;, switch_active);
 <span class="boring">
 </span><span class="boring">    // Set up box
 </span><span class="boring">    let gtk_box = Box::builder()
@@ -1600,8 +1620,7 @@ That is why <code>gtk-rs</code> provides corresponding <a href="../docs/gtk4/str
 <p>Properties can not only be accessed via getters &amp; setters, they can also be bound to each other.
 Let's see how that would look like for two <code>Switch</code> instances.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/g_object_properties/2/main.rs">listings/g_object_properties/2/main.rs</a></p>
-<pre><code class="language-rust  no_run noplayground"><span class="boring">use glib::BindingFlags;
-</span><span class="boring">use gtk::prelude::*;
+<pre><code class="language-rust  no_run noplayground"><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation, Switch};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.GObjectProperties3&quot;;
@@ -1623,8 +1642,8 @@ Let's see how that would look like for two <code>Switch</code> instances.</p>
     let switch_2 = Switch::new();
 <span class="boring">
 </span><span class="boring">    switch_1
-</span><span class="boring">        .bind_property(&quot;state&quot;, &amp;switch_2, &quot;state&quot;)
-</span><span class="boring">        .flags(BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">        .bind_property(&quot;active&quot;, &amp;switch_2, &quot;active&quot;)
+</span><span class="boring">        .bidirectional()
 </span><span class="boring">        .build();
 </span><span class="boring">
 </span><span class="boring">    // Set up box
@@ -1651,11 +1670,10 @@ Let's see how that would look like for two <code>Switch</code> instances.</p>
 </span><span class="boring">    // Present the window
 </span><span class="boring">    window.present();
 </span><span class="boring">}</span></code></pre>
-<p>In our case, we want to bind the &quot;state&quot; property of <code>switch_1</code> to the &quot;state&quot; property of <code>switch_2</code>.
-We also want the binding to be bidirectional, so we specify this with the <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/struct.BindingFlags.html"><code>BindingFlags</code></a>.</p>
+<p>In our case, we want to bind the &quot;active&quot; property of <code>switch_1</code> to the &quot;active&quot; property of <code>switch_2</code>.
+We also want the binding to be bidirectional, so we specify by calling the <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/object/struct.BindingBuilder.html#method.bidirectional"><code>bidirectional</code></a> method.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/g_object_properties/2/main.rs">listings/g_object_properties/2/main.rs</a></p>
-<pre><code class="language-rust  no_run noplayground"><span class="boring">use glib::BindingFlags;
-</span><span class="boring">use gtk::prelude::*;
+<pre><code class="language-rust  no_run noplayground"><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation, Switch};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.GObjectProperties3&quot;;
@@ -1677,8 +1695,8 @@ We also want the binding to be bidirectional, so we specify this with the <a hre
 </span><span class="boring">    let switch_2 = Switch::new();
 </span><span class="boring">
 </span>    switch_1
-        .bind_property(&quot;state&quot;, &amp;switch_2, &quot;state&quot;)
-        .flags(BindingFlags::BIDIRECTIONAL)
+        .bind_property(&quot;active&quot;, &amp;switch_2, &quot;active&quot;)
+        .bidirectional()
         .build();
 <span class="boring">
 </span><span class="boring">    // Set up box
@@ -1722,7 +1740,7 @@ It also generates <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/gli
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/g_object_properties/3/custom_button/imp.rs">listings/g_object_properties/3/custom_button/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -1744,19 +1762,8 @@ pub struct CustomButton {
 </span><span class="boring">}
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
+</span><span class="boring">#[glib::derived_properties]
 </span><span class="boring">impl ObjectImpl for CustomButton {
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
 </span><span class="boring">    fn constructed(&amp;self) {
 </span><span class="boring">        self.parent_constructed();
 </span><span class="boring">
@@ -1764,7 +1771,7 @@ pub struct CustomButton {
 </span><span class="boring">        // `SYNC_CREATE` ensures that the label will be immediately set
 </span><span class="boring">        let obj = self.obj();
 </span><span class="boring">        obj.bind_property(&quot;number&quot;, obj.as_ref(), &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">    }
 </span><span class="boring">}
@@ -1779,14 +1786,14 @@ pub struct CustomButton {
 </span><span class="boring">        self.obj().set_number(incremented_number);
 </span><span class="boring">    }
 </span><span class="boring">}</span></code></pre>
-<p>The implementation of <code>properties</code>, <code>set_property</code> and <code>property</code> is boilerplate that is the same for every GObject that generates its properties with the <code>Property</code> macro.
+<p>The <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/attr.derived_properties.html"><code>glib::derived_properties</code></a> macro generates boilerplate that is the same for every GObject that generates its properties with the <code>Property</code> macro.
 In <code>constructed</code> we use our new property &quot;number&quot; by binding the &quot;label&quot; property to it.
 <code>bind_property</code> converts the integer value of &quot;number&quot; to the string of &quot;label&quot; on its own.
 Now we don't have to adapt the label in the &quot;clicked&quot; callback anymore.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/g_object_properties/3/custom_button/imp.rs">listings/g_object_properties/3/custom_button/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -1808,19 +1815,8 @@ Now we don't have to adapt the label in the &quot;clicked&quot; callback anymore
 </span><span class="boring">}
 </span><span class="boring">
 </span>// Trait shared by all GObjects
+#[glib::derived_properties]
 impl ObjectImpl for CustomButton {
-    fn properties() -&gt; &amp;'static [ParamSpec] {
-        Self::derived_properties()
-    }
-
-    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-        self.derived_set_property(id, value, pspec)
-    }
-
-    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-        self.derived_property(id, pspec)
-    }
-
     fn constructed(&amp;self) {
         self.parent_constructed();
 
@@ -1828,7 +1824,7 @@ impl ObjectImpl for CustomButton {
         // `SYNC_CREATE` ensures that the label will be immediately set
         let obj = self.obj();
         obj.bind_property(&quot;number&quot;, obj.as_ref(), &quot;label&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
     }
 }
@@ -1848,7 +1844,7 @@ Before we modified <code>number</code> directly, now we can use the generated wr
 This way the &quot;notify&quot; signal will be emitted, which is necessary for the bindings to work as expected.</p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -1870,19 +1866,8 @@ This way the &quot;notify&quot; signal will be emitted, which is necessary for t
 </span><span class="boring">}
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
+</span><span class="boring">#[glib::derived_properties]
 </span><span class="boring">impl ObjectImpl for CustomButton {
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
 </span><span class="boring">    fn constructed(&amp;self) {
 </span><span class="boring">        self.parent_constructed();
 </span><span class="boring">
@@ -1890,7 +1875,7 @@ This way the &quot;notify&quot; signal will be emitted, which is necessary for t
 </span><span class="boring">        // `SYNC_CREATE` ensures that the label will be immediately set
 </span><span class="boring">        let obj = self.obj();
 </span><span class="boring">        obj.bind_property(&quot;number&quot;, obj.as_ref(), &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">    }
 </span><span class="boring">}
@@ -1910,7 +1895,6 @@ impl ButtonImpl for CustomButton {
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod custom_button;
 </span><span class="boring">
 </span><span class="boring">use custom_button::CustomButton;
-</span><span class="boring">use glib::BindingFlags;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation};
 </span><span class="boring">
@@ -1945,7 +1929,8 @@ impl ButtonImpl for CustomButton {
 </span><span class="boring">            let decremented_number = number - 1;
 </span><span class="boring">            Some(decremented_number.to_value())
 </span><span class="boring">        })
-</span><span class="boring">        .flags(BindingFlags::BIDIRECTIONAL | BindingFlags::SYNC_CREATE)
+</span><span class="boring">        .bidirectional()
+</span><span class="boring">        .sync_create()
 </span><span class="boring">        .build();
 </span><span class="boring">
 </span><span class="boring">    // The closure will be called
@@ -1984,7 +1969,6 @@ By leveraging <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/ob
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod custom_button;
 </span><span class="boring">
 </span><span class="boring">use custom_button::CustomButton;
-</span><span class="boring">use glib::BindingFlags;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation};
 </span><span class="boring">
@@ -2019,7 +2003,8 @@ By leveraging <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/ob
             let decremented_number = number - 1;
             Some(decremented_number.to_value())
         })
-        .flags(BindingFlags::BIDIRECTIONAL | BindingFlags::SYNC_CREATE)
+        .bidirectional()
+        .sync_create()
         .build();
 <span class="boring">
 </span><span class="boring">    // The closure will be called
@@ -2065,7 +2050,6 @@ For example like this:</p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod custom_button;
 </span><span class="boring">
 </span><span class="boring">use custom_button::CustomButton;
-</span><span class="boring">use glib::BindingFlags;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Align, Application, ApplicationWindow, Box, Orientation};
 </span><span class="boring">
@@ -2100,7 +2084,8 @@ For example like this:</p>
 </span><span class="boring">            let decremented_number = number - 1;
 </span><span class="boring">            Some(decremented_number.to_value())
 </span><span class="boring">        })
-</span><span class="boring">        .flags(BindingFlags::BIDIRECTIONAL | BindingFlags::SYNC_CREATE)
+</span><span class="boring">        .bidirectional()
+</span><span class="boring">        .sync_create()
 </span><span class="boring">        .build();
 </span><span class="boring">
 </span>    // The closure will be called
@@ -2252,7 +2237,7 @@ First we override the necessary methods in <code>ObjectImpl</code>.</p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
 </span><span class="boring">use glib::subclass::Signal;
-</span><span class="boring">use glib::{BindingFlags, ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -2275,6 +2260,7 @@ First we override the necessary methods in <code>ObjectImpl</code>.</p>
 </span><span class="boring">}
 </span><span class="boring">
 </span>// Trait shared by all GObjects
+#[glib::derived_properties]
 impl ObjectImpl for CustomButton {
     fn signals() -&gt; &amp;'static [Signal] {
         static SIGNALS: Lazy&lt;Vec&lt;Signal&gt;&gt; = Lazy::new(|| {
@@ -2285,18 +2271,6 @@ impl ObjectImpl for CustomButton {
         SIGNALS.as_ref()
     }
 <span class="boring">
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
 </span><span class="boring">    fn constructed(&amp;self) {
 </span><span class="boring">        self.parent_constructed();
 </span><span class="boring">
@@ -2304,7 +2278,7 @@ impl ObjectImpl for CustomButton {
 </span><span class="boring">        // `SYNC_CREATE` ensures that the label will be immediately set
 </span><span class="boring">        let obj = self.obj();
 </span><span class="boring">        obj.bind_property(&quot;number&quot;, obj.as_ref(), &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">    }
 </span><span class="boring">}
@@ -2340,7 +2314,7 @@ After we did that, we set <code>number</code> back to 0.</p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
 </span><span class="boring">use glib::subclass::Signal;
-</span><span class="boring">use glib::{BindingFlags, ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -2363,6 +2337,7 @@ After we did that, we set <code>number</code> back to 0.</p>
 </span><span class="boring">}
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
+</span><span class="boring">#[glib::derived_properties]
 </span><span class="boring">impl ObjectImpl for CustomButton {
 </span><span class="boring">    fn signals() -&gt; &amp;'static [Signal] {
 </span><span class="boring">        static SIGNALS: Lazy&lt;Vec&lt;Signal&gt;&gt; = Lazy::new(|| {
@@ -2373,18 +2348,6 @@ After we did that, we set <code>number</code> back to 0.</p>
 </span><span class="boring">        SIGNALS.as_ref()
 </span><span class="boring">    }
 </span><span class="boring">
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
 </span><span class="boring">    fn constructed(&amp;self) {
 </span><span class="boring">        self.parent_constructed();
 </span><span class="boring">
@@ -2392,7 +2355,7 @@ After we did that, we set <code>number</code> back to 0.</p>
 </span><span class="boring">        // `SYNC_CREATE` ensures that the label will be immediately set
 </span><span class="boring">        let obj = self.obj();
 </span><span class="boring">        obj.bind_property(&quot;number&quot;, obj.as_ref(), &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">    }
 </span><span class="boring">}
@@ -2481,7 +2444,8 @@ That is why you can move the window at the same time as a progress bar is growin
 That happens when a single task takes too long.
 Let's look at one example.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/main_event_loop/1/main.rs">listings/main_event_loop/1/main.rs</a></p>
-<pre><code class="language-rust  no_run noplayground">use std::time::Duration;
+<pre><code class="language-rust  no_run noplayground">use std::thread;
+use std::time::Duration;
 
 use gtk::prelude::*;
 use gtk::{self, glib, Application, ApplicationWindow, Button};
@@ -2513,7 +2477,7 @@ fn build_ui(app: &amp;Application) {
     button.connect_clicked(move |_| {
         // GUI is blocked for 5 seconds after the button is pressed
         let five_seconds = Duration::from_secs(5);
-        std::thread::sleep(five_seconds);
+        thread::sleep(five_seconds);
     });
 
     // Create a window
@@ -2531,13 +2495,13 @@ We can't even move the window.
 The <code>sleep</code> call is an artificial example,
 but it is not unusual wanting to run a slightly longer operation in one go.</p>
 <h2 id="how-to-avoid-blocking-the-main-loop"><a class="header" href="#how-to-avoid-blocking-the-main-loop">How to Avoid Blocking the Main Loop</a></h2>
-<p>In order to avoid blocking the main loop we can spawn a new thread and let the operation run there.</p>
+<p>In order to avoid blocking the main loop we can spawn a new thread with <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/gio/fn.spawn_blocking.html"><code>gio::spawn_blocking</code></a> and let the operation run there.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/main_event_loop/2/main.rs">listings/main_event_loop/2/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::thread;
 </span><span class="boring">use std::time::Duration;
 </span><span class="boring">
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{self, glib, Application, ApplicationWindow, Button};
+</span><span class="boring">use gtk::{self, gio, glib, Application, ApplicationWindow, Button};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.MainEventLoop2&quot;;
 </span><span class="boring">
@@ -2565,7 +2529,7 @@ but it is not unusual wanting to run a slightly longer operation in one go.</p>
 </span>    // Connect to &quot;clicked&quot; signal of `button`
     button.connect_clicked(move |_| {
         // The long running operation runs now in a separate thread
-        thread::spawn(move || {
+        gio::spawn_blocking(move || {
             let five_seconds = Duration::from_secs(5);
             thread::sleep(five_seconds);
         });
@@ -2600,9 +2564,9 @@ We want to send a <code>bool</code> to inform, whether we want the button to rea
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::thread;
 </span><span class="boring">use std::time::Duration;
 </span><span class="boring">
-</span><span class="boring">use glib::{clone, Continue, MainContext, PRIORITY_DEFAULT};
+</span><span class="boring">use glib::{clone, MainContext, Priority};
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{glib, Application, ApplicationWindow, Button};
+</span><span class="boring">use gtk::{gio, glib, Application, ApplicationWindow, Button};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.MainEventLoop3&quot;;
 </span><span class="boring">
@@ -2627,12 +2591,12 @@ We want to send a <code>bool</code> to inform, whether we want the button to rea
 </span><span class="boring">        .margin_end(12)
 </span><span class="boring">        .build();
 </span><span class="boring">
-</span>    let (sender, receiver) = MainContext::channel(PRIORITY_DEFAULT);
+</span>    let (sender, receiver) = MainContext::channel(Priority::default());
     // Connect to &quot;clicked&quot; signal of `button`
     button.connect_clicked(move |_| {
         let sender = sender.clone();
         // The long running operation runs now in a separate thread
-        thread::spawn(move || {
+        gio::spawn_blocking(move || {
             // Deactivate the button until the operation is done
             sender.send(false).expect(&quot;Could not send through channel&quot;);
             let ten_seconds = Duration::from_secs(10);
@@ -2645,11 +2609,11 @@ We want to send a <code>bool</code> to inform, whether we want the button to rea
     // The main loop executes the closure as soon as it receives the message
     receiver.attach(
         None,
-        clone!(@weak button =&gt; @default-return Continue(false),
-                    move |enable_button| {
-                        button.set_sensitive(enable_button);
-                        Continue(true)
-                    }
+        clone!(@weak button =&gt; @default-return glib::ControlFlow::Break,
+            move |enable_button| {
+                button.set_sensitive(enable_button);
+                glib::ControlFlow::Continue
+            }
         ),
     );
 <span class="boring">
@@ -2671,15 +2635,15 @@ We want to send a <code>bool</code> to inform, whether we want the button to rea
 </div>
 <blockquote>
 <p>Per default, <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/macro.clone.html"><code>glib::clone!</code></a> returns <code>()</code> when upgrading of a weak reference fails.
-<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/struct.Receiver.html#method.attach"><code>glib::Receiver::attach</code></a> expects a closure with a return value of type <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/source/struct.Continue.html"><code>glib::Continue</code></a>.
-This is why we specify <code>@default-return</code> as <code>Continue(False)</code> to clarify that the closure not be called anymore as soon as the upgrade of a weak reference fails.</p>
+<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/struct.Receiver.html#method.attach"><code>glib::Receiver::attach</code></a> expects a closure with a return value of type <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/enum.ControlFlow.html"><code>glib::ControlFlow</code></a>.
+This is why we specify <code>@default-return</code> as <code>glib::ControlFlow::Break</code> to clarify that the closure not be called anymore as soon as the upgrade of a weak reference fails.</p>
 </blockquote>
 <p>Spawning threads is not the only way to run operations asynchronously.
 You can also let the main loop take care of running <a href="https://rust-lang.github.io/async-book/"><code>async</code></a> functions.
 If you do that from the main thread use <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/struct.MainContext.html#method.spawn_local"><code>spawn_local</code></a>, from other threads <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/glib/struct.MainContext.html#method.spawn"><code>spawn</code></a> has to be used.
 The converted code looks and behaves very similar to the multi-threaded code.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/main_event_loop/4/main.rs">listings/main_event_loop/4/main.rs</a></p>
-<pre><code class="language-rust  no_run noplayground"><span class="boring">use glib::{clone, timeout_future_seconds, Continue, MainContext, PRIORITY_DEFAULT};
+<pre><code class="language-rust  no_run noplayground"><span class="boring">use glib::{clone, timeout_future_seconds, MainContext, Priority};
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{glib, Application, ApplicationWindow, Button};
 </span><span class="boring">
@@ -2706,7 +2670,7 @@ The converted code looks and behaves very similar to the multi-threaded code.</p
 </span><span class="boring">        .margin_end(12)
 </span><span class="boring">        .build();
 </span><span class="boring">
-</span>    let (sender, receiver) = MainContext::channel(PRIORITY_DEFAULT);
+</span>    let (sender, receiver) = MainContext::channel(Priority::default());
     // Connect to &quot;clicked&quot; signal of `button`
     button.connect_clicked(move |_| {
         let main_context = MainContext::default();
@@ -2723,11 +2687,11 @@ The converted code looks and behaves very similar to the multi-threaded code.</p
     // The main loop executes the closure as soon as it receives the message
     receiver.attach(
         None,
-        clone!(@weak button =&gt; @default-return Continue(false),
-                    move |enable_button| {
-                        button.set_sensitive(enable_button);
-                        Continue(true)
-                    }
+        clone!(@weak button =&gt; @default-return glib::ControlFlow::Break,
+            move |enable_button| {
+                button.set_sensitive(enable_button);
+                glib::ControlFlow::Continue
+            }
         ),
     );
 <span class="boring">
@@ -2797,7 +2761,7 @@ The converted code looks and behaves very similar to the multi-threaded code.</p
 <pre><pre class="playground"><code class="language-rust  no_run compile_fail"><span class="boring">use std::{thread, time::Duration};
 </span><span class="boring">
 </span><span class="boring">use glib::{clone, MainContext, PRIORITY_DEFAULT};
-</span><span class="boring">use gtk::glib;
+</span><span class="boring">use gtk::{glib, gio};
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{Application, ApplicationWindow, Button};
 </span><span class="boring">
@@ -2839,7 +2803,7 @@ The converted code looks and behaves very similar to the multi-threaded code.</p
     button.connect_clicked(move |button| {
         button.clone();
         // The long running operation runs now in a separate thread
-        thread::spawn(move || {
+        gio::spawn_blocking(move || {
             // Deactivate the button until the operation is done
             button.set_sensitive(false);
             let five_seconds = Duration::from_secs(5);
@@ -2884,7 +2848,6 @@ Let's learn how to use <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/doc
 The <code>id</code> is the same application id we used when we created our application.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/1/main.rs">listings/settings/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use gtk::glib::signal::Inhibit;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, Align, Application, ApplicationWindow, Switch};
 </span><span class="boring">
@@ -2925,7 +2888,7 @@ The <code>id</code> is the same application id we used when we created our appli
 </span><span class="boring">            .set_boolean(&quot;is-switch-enabled&quot;, is_enabled)
 </span><span class="boring">            .expect(&quot;Could not set setting.&quot;);
 </span><span class="boring">        // Don't inhibit the default handler
-</span><span class="boring">        Inhibit(false)
+</span><span class="boring">        glib::ControlFlow::Continue
 </span><span class="boring">    });
 </span><span class="boring">
 </span><span class="boring">    // Create a window
@@ -2960,7 +2923,6 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
 <p>We initialize the <code>Settings</code> object by specifying the application id.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/1/main.rs">listings/settings/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use gtk::glib::signal::Inhibit;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, Align, Application, ApplicationWindow, Switch};
 </span><span class="boring">
@@ -3001,7 +2963,7 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
 </span><span class="boring">            .set_boolean(&quot;is-switch-enabled&quot;, is_enabled)
 </span><span class="boring">            .expect(&quot;Could not set setting.&quot;);
 </span><span class="boring">        // Don't inhibit the default handler
-</span><span class="boring">        Inhibit(false)
+</span><span class="boring">        glib::ControlFlow::Continue
 </span><span class="boring">    });
 </span><span class="boring">
 </span><span class="boring">    // Create a window
@@ -3017,7 +2979,6 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
 <p>Then we get the settings key and use it when we create our <code>Switch</code>.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/1/main.rs">listings/settings/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use gtk::glib::signal::Inhibit;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, Align, Application, ApplicationWindow, Switch};
 </span><span class="boring">
@@ -3058,7 +3019,7 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
 </span><span class="boring">            .set_boolean(&quot;is-switch-enabled&quot;, is_enabled)
 </span><span class="boring">            .expect(&quot;Could not set setting.&quot;);
 </span><span class="boring">        // Don't inhibit the default handler
-</span><span class="boring">        Inhibit(false)
+</span><span class="boring">        glib::ControlFlow::Continue
 </span><span class="boring">    });
 </span><span class="boring">
 </span><span class="boring">    // Create a window
@@ -3074,7 +3035,6 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
 <p>Finally, we assure that the switch state is stored in the settings whenever we click on it.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/1/main.rs">listings/settings/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use gtk::glib::signal::Inhibit;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, Align, Application, ApplicationWindow, Switch};
 </span><span class="boring">
@@ -3115,7 +3075,7 @@ glib-compile-schemas C:/ProgramData/glib-2.0/schemas/
             .set_boolean(&quot;is-switch-enabled&quot;, is_enabled)
             .expect(&quot;Could not set setting.&quot;);
         // Don't inhibit the default handler
-        Inhibit(false)
+        glib::ControlFlow::Continue
     });
 <span class="boring">
 </span><span class="boring">    // Create a window
@@ -3140,9 +3100,8 @@ The <code>Switch</code> has a property &quot;active&quot; and <code>Settings</co
 So let's do exactly that.</p>
 <p>We can remove the <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/gio/prelude/trait.SettingsExt.html#tymethod.boolean"><code>boolean</code></a> call before initializing the <code>Switch</code> as well as the <a href="../docs/gtk4/struct.Switch.html#method.connect_state_set"><code>connect_state_set</code></a> call.
 We then bind the setting to the property by specifying the key, object and name of the property.
-Additionally, we specify <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/gio/struct.SettingsBindFlags.html"><code>SettingsBindFlags</code></a> to control the direction in which the binding works.</p>
-<p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/2/main.rs">listings/settings/2/main.rs</a></p>
-<pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::{Settings, SettingsBindFlags};
+Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/settings/2/main.rs">listings/settings/2/main.rs</a></p>
+<pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, Align, Application, ApplicationWindow, Switch};
 </span><span class="boring">
@@ -3175,7 +3134,6 @@ Additionally, we specify <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/d
 </span><span class="boring">
 </span>    settings
         .bind(&quot;is-switch-enabled&quot;, &amp;switch, &quot;active&quot;)
-        .flags(SettingsBindFlags::DEFAULT)
         .build();
 <span class="boring">
 </span><span class="boring">    // Create a window
@@ -3300,7 +3258,6 @@ Until it hits stable, we will add it as external dependency.</p>
 <p>We also override the <code>constructed</code> and <code>close_request</code> methods, where we load or save the window state. </p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/saving_window_state/1/custom_window/imp.rs">listings/saving_window_state/1/custom_window/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, ApplicationWindow};
 </span><span class="boring">use once_cell::sync::OnceCell;
@@ -3328,14 +3285,13 @@ impl ObjectImpl for Window {
 impl WidgetImpl for Window {}
 impl WindowImpl for Window {
     // Save window state right before the window will be closed
-    fn close_request(&amp;self) -&gt; Inhibit {
+    fn close_request(&amp;self) -&gt; glib::ControlFlow {
         // Save window size
         self.obj()
             .save_window_size()
             .expect(&quot;Failed to save window state&quot;);
 
-        // Don't inhibit the default handler
-        Inhibit(false)
+        glib::ControlFlow::Continue
     }
 }
 impl ApplicationWindowImpl for Window {}</code></pre>
@@ -3482,7 +3438,7 @@ impl IntegerObject {
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/list_widgets/2/integer_object/imp.rs">listings/list_widgets/2/integer_object/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::Cell;
 </span><span class="boring">
-</span><span class="boring">use glib::{ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -3503,19 +3459,8 @@ pub struct IntegerObject {
 </span><span class="boring">}
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
-</span><span class="boring">impl ObjectImpl for IntegerObject {
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">}
+</span><span class="boring">#[glib::derived_properties]
+</span><span class="boring">impl ObjectImpl for IntegerObject {}
 </span><span class="boring"></span></code></pre>
 <p>We now fill the model with integers from 0 to 100 000.
 Please note that models only takes care of the data.
@@ -3548,7 +3493,7 @@ Neither <code>Label</code> nor any other widget is mentioned here.</p>
     let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 
     // Create new model
-    let model = gio::ListStore::new(IntegerObject::static_type());
+    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 
     // Add the vector to the model
     model.extend_from_slice(&amp;vector);
@@ -3636,7 +3581,7 @@ We connect to it to create a <code>Label</code> for every requested widget.</p>
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -3721,7 +3666,7 @@ We connect to it to create a <code>Label</code> for every requested widget.</p>
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -3808,7 +3753,7 @@ Then we pass the model and the factory to the <a href="../docs/gtk4/struct.ListV
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -3893,7 +3838,7 @@ Then we pass the model and the factory to the <a href="../docs/gtk4/struct.ListV
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -3977,7 +3922,6 @@ For that we first add the method <code>increase_number</code> to our <code>Integ
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/list_widgets/3/main.rs">listings/list_widgets/3/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod integer_object;
 </span><span class="boring">
-</span><span class="boring">use glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, Application, ApplicationWindow, Label, ListView, PolicyType,
 </span><span class="boring">    ScrolledWindow, SignalListItemFactory, SingleSelection,
@@ -4003,7 +3947,7 @@ For that we first add the method <code>increase_number</code> to our <code>Integ
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4037,7 +3981,7 @@ For that we first add the method <code>increase_number</code> to our <code>Integ
 </span><span class="boring">        // Bind &quot;label&quot; to &quot;number&quot;
 </span><span class="boring">        integer_object
 </span><span class="boring">            .bind_property(&quot;number&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">    });
 </span><span class="boring">
@@ -4081,7 +4025,6 @@ One naive approach would be to bind the properties in the &quot;bind&quot; step 
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/list_widgets/3/main.rs">listings/list_widgets/3/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod integer_object;
 </span><span class="boring">
-</span><span class="boring">use glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, Application, ApplicationWindow, Label, ListView, PolicyType,
 </span><span class="boring">    ScrolledWindow, SignalListItemFactory, SingleSelection,
@@ -4107,7 +4050,7 @@ One naive approach would be to bind the properties in the &quot;bind&quot; step 
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4141,7 +4084,7 @@ One naive approach would be to bind the properties in the &quot;bind&quot; step 
         // Bind &quot;label&quot; to &quot;number&quot;
         integer_object
             .bind_property(&quot;number&quot;, &amp;label, &quot;label&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
     });
 <span class="boring">
@@ -4216,7 +4159,7 @@ Let's see how the &quot;setup&quot; step now works.</p>
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4311,7 +4254,7 @@ We do that by passing it to a <a href="../docs/gtk4/struct.FilterListModel.html"
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4429,7 +4372,7 @@ Now we pass the filtered model to <a href="../docs/gtk4/struct.SortListModel.htm
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4546,7 +4489,7 @@ Now we pass the filtered model to <a href="../docs/gtk4/struct.SortListModel.htm
 </span><span class="boring">    let vector: Vec&lt;IntegerObject&gt; = (0..=100_000).map(IntegerObject::new).collect();
 </span><span class="boring">
 </span><span class="boring">    // Create new model
-</span><span class="boring">    let model = gio::ListStore::new(IntegerObject::static_type());
+</span><span class="boring">    let model = gio::ListStore::new::&lt;IntegerObject&gt;();
 </span><span class="boring">
 </span><span class="boring">    // Add the vector to the model
 </span><span class="boring">    model.extend_from_slice(&amp;vector);
@@ -4666,10 +4609,7 @@ This is why we will skip this topic here.</p>
 </span><span class="boring">fn build_ui(app: &amp;Application) {
 </span>    // Create a `StringList` with number from 0 to 100_000
     // `StringList` implements FromIterator&lt;String&gt;
-    let model: StringList = (0..=100_000)
-        .into_iter()
-        .map(|number| number.to_string())
-        .collect();
+    let model: StringList = (0..=100_000).map(|number| number.to_string()).collect();
 <span class="boring">
 </span><span class="boring">    let factory = SignalListItemFactory::new();
 </span><span class="boring">    factory.connect_setup(move |_, list_item| {
@@ -4711,7 +4651,7 @@ This is why we will skip this topic here.</p>
 <p>Note that we can create a <code>StringList</code> directly from an iterator over strings.
 This means we don't have to create a custom GObject for our model anymore.</p>
 <p>As usual, we connect the label to the list item via an expression.
-Here we can use <a href="../docs/gtk4/struct.StringObject.html"><code>StringObject</code></a>, which exposes its content via the <a href="https://docs.gtk.org/gtk4/property.StringObject.string.html">property &quot;string&quot;</a>.</p>
+Here we can use <a href="../docs/gtk4/struct.StringObject.html"><code>StringObject</code></a>, which exposes its content via the <a href="../docs/gtk4/struct.StringObject.html#string">property &quot;string&quot;</a>.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/list_widgets/6/main.rs">listings/list_widgets/6/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gtk::{glib, prelude::*, ListItem};
 </span><span class="boring">use gtk::{
@@ -4735,10 +4675,7 @@ Here we can use <a href="../docs/gtk4/struct.StringObject.html"><code>StringObje
 </span><span class="boring">fn build_ui(app: &amp;Application) {
 </span><span class="boring">    // Create a `StringList` with number from 0 to 100_000
 </span><span class="boring">    // `StringList` implements FromIterator&lt;String&gt;
-</span><span class="boring">    let model: StringList = (0..=100_000)
-</span><span class="boring">        .into_iter()
-</span><span class="boring">        .map(|number| number.to_string())
-</span><span class="boring">        .collect();
+</span><span class="boring">    let model: StringList = (0..=100_000).map(|number| number.to_string()).collect();
 </span><span class="boring">
 </span><span class="boring">    let factory = SignalListItemFactory::new();
 </span>    factory.connect_setup(move |_, list_item| {
@@ -4859,7 +4796,7 @@ Then you start listing the elements you want to describe.
 In order to define a composite template, we specify the name <code>MyGtkAppWindow</code> of the custom widget we want to create and the parent <a href="../docs/gtk4/struct.ApplicationWindow.html"><code>gtk::ApplicationWindow</code></a> it derives of.
 These <code>xml</code> files are independent of the programming language, which is why the classes have the original names.
 Luckily, they all convert like this: <code>gtk::ApplicationWindow</code> → <code>GtkApplicationWindow</code>.
-Then we can specify properties which are listed <a href="https://docs.gtk.org/gtk4/class.ApplicationWindow.html">here</a> for <code>ApplicationWindow</code>.
+Then we can specify properties which are listed <a href="../docs/gtk4/struct.ApplicationWindow.html#properties">here</a> for <code>ApplicationWindow</code>.
 Since <code>ApplicationWindow</code> can contain other widgets we use the <code>&lt;child&gt;</code> tag to add a <code>gtk::Button</code>.
 We want to be able to refer to the button later on so we also set its <code>id</code>.</p>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
@@ -5741,7 +5678,7 @@ As usual, we have to list all <a href="https://docs.gtk.org/gtk4/class.Applicati
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -6008,7 +5945,7 @@ For each property we additionally specify the name, the type and which member va
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/1/task_object/imp.rs">listings/todo/1/task_object/imp.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use std::cell::RefCell;
 </span><span class="boring">
-</span><span class="boring">use glib::{ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::glib;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
@@ -6032,19 +5969,8 @@ impl ObjectSubclass for TaskObject {
 }
 
 // Trait shared by all GObjects
-impl ObjectImpl for TaskObject {
-    fn properties() -&gt; &amp;'static [ParamSpec] {
-        Self::derived_properties()
-    }
-
-    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-        self.derived_set_property(id, value, pspec)
-    }
-
-    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-        self.derived_property(id, pspec)
-    }
-}</code></pre>
+#[glib::derived_properties]
+impl ObjectImpl for TaskObject {}</code></pre>
 <h2 id="task-row"><a class="header" href="#task-row">Task Row</a></h2>
 <p>Let's move on to the individual tasks.
 The row of a task should look like this:</p>
@@ -6077,7 +6003,7 @@ The row of a task should look like this:</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/1/task_row/mod.rs">listings/todo/1/task_row/mod.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, Object};
+</span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{glib, pango};
@@ -6111,7 +6037,8 @@ The row of a task should look like this:</p>
 </span><span class="boring">        // Bind `task_object.completed` to `task_row.completed_button.active`
 </span><span class="boring">        let completed_button_binding = task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;completed_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        // Save binding
 </span><span class="boring">        bindings.push(completed_button_binding);
@@ -6119,7 +6046,7 @@ The row of a task should look like this:</p>
 </span><span class="boring">        // Bind `task_object.content` to `task_row.content_label.label`
 </span><span class="boring">        let content_label_binding = task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;content_label, &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        // Save binding
 </span><span class="boring">        bindings.push(content_label_binding);
@@ -6127,7 +6054,7 @@ The row of a task should look like this:</p>
 </span><span class="boring">        // Bind `task_object.completed` to `task_row.content_label.attributes`
 </span><span class="boring">        let content_label_binding = task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;content_label, &quot;attributes&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .transform_to(|_, active| {
 </span><span class="boring">                let attribute_list = AttrList::new();
 </span><span class="boring">                if active {
@@ -6293,7 +6220,7 @@ Then we store a reference to the model in <code>imp::Window</code> as well as in
 
     fn setup_tasks(&amp;self) {
         // Create new model
-        let model = gio::ListStore::new(TaskObject::static_type());
+        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 
         // Get state and set model
         self.imp().tasks.replace(Some(model));
@@ -6424,7 +6351,7 @@ Finally, the entry will be cleared.</p>
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -6561,7 +6488,7 @@ We will need to unbind them manually when they are no longer needed.</p>
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -6661,7 +6588,7 @@ Unbinding will only work if it can access the stored <a href="https://gtk-rs.org
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/1/task_row/mod.rs">listings/todo/1/task_row/mod.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, Object};
+</span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{glib, pango};
@@ -6695,7 +6622,8 @@ Unbinding will only work if it can access the stored <a href="https://gtk-rs.org
         // Bind `task_object.completed` to `task_row.completed_button.active`
         let completed_button_binding = task_object
             .bind_property(&quot;completed&quot;, &amp;completed_button, &quot;active&quot;)
-            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+            .bidirectional()
+            .sync_create()
             .build();
         // Save binding
         bindings.push(completed_button_binding);
@@ -6703,7 +6631,7 @@ Unbinding will only work if it can access the stored <a href="https://gtk-rs.org
         // Bind `task_object.content` to `task_row.content_label.label`
         let content_label_binding = task_object
             .bind_property(&quot;content&quot;, &amp;content_label, &quot;label&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
         // Save binding
         bindings.push(content_label_binding);
@@ -6711,7 +6639,7 @@ Unbinding will only work if it can access the stored <a href="https://gtk-rs.org
         // Bind `task_object.completed` to `task_row.content_label.attributes`
         let content_label_binding = task_object
             .bind_property(&quot;completed&quot;, &amp;content_label, &quot;attributes&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .transform_to(|_, active| {
                 let attribute_list = AttrList::new();
                 if active {
@@ -6739,7 +6667,7 @@ In the end, it clears the vector.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/1/task_row/mod.rs">listings/todo/1/task_row/mod.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use glib::{BindingFlags, Object};
+</span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{glib, pango};
@@ -6773,7 +6701,8 @@ In the end, it clears the vector.</p>
 </span><span class="boring">        // Bind `task_object.completed` to `task_row.completed_button.active`
 </span><span class="boring">        let completed_button_binding = task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;completed_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        // Save binding
 </span><span class="boring">        bindings.push(completed_button_binding);
@@ -6781,7 +6710,7 @@ In the end, it clears the vector.</p>
 </span><span class="boring">        // Bind `task_object.content` to `task_row.content_label.label`
 </span><span class="boring">        let content_label_binding = task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;content_label, &quot;label&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        // Save binding
 </span><span class="boring">        bindings.push(content_label_binding);
@@ -6789,7 +6718,7 @@ In the end, it clears the vector.</p>
 </span><span class="boring">        // Bind `task_object.completed` to `task_row.content_label.attributes`
 </span><span class="boring">        let content_label_binding = task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;content_label, &quot;attributes&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .transform_to(|_, active| {
 </span><span class="boring">                let attribute_list = AttrList::new();
 </span><span class="boring">                if active {
@@ -7041,7 +6970,7 @@ Let's see how this works.</p>
     let action_count = SimpleAction::new_stateful(
         &quot;count&quot;,
         Some(&amp;i32::static_variant_type()),
-        original_state.to_variant(),
+        &amp;original_state.to_variant(),
     );
     action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
         // Get state
@@ -7059,7 +6988,7 @@ Let's see how this works.</p>
 
         // Increase state by parameter and store state
         state += parameter;
-        action.set_state(state.to_variant());
+        action.set_state(&amp;state.to_variant());
 
         // Update label with new state
         label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -7142,15 +7071,15 @@ With <a href="../docs/gtk4/builders/struct.ButtonBuilder.html"><code>ButtonBuild
 </span><span class="boring">    let action_count = SimpleAction::new_stateful(
 </span><span class="boring">        &quot;count&quot;,
 </span><span class="boring">        Some(&amp;i32::static_variant_type()),
-</span><span class="boring">        original_state.to_variant(),
+</span><span class="boring">        &amp;original_state.to_variant(),
 </span><span class="boring">    );
 </span><span class="boring">    action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
 </span><span class="boring">        // Get state
 </span><span class="boring">        let mut state = action
-</span><span class="boring">        .state()
-</span><span class="boring">        .expect(&quot;Could not get state.&quot;)
-</span><span class="boring">        .get::&lt;i32&gt;()
-</span><span class="boring">        .expect(&quot;The value needs to be of type `i32`.&quot;);
+</span><span class="boring">            .state()
+</span><span class="boring">            .expect(&quot;Could not get state.&quot;)
+</span><span class="boring">            .get::&lt;i32&gt;()
+</span><span class="boring">            .expect(&quot;The value needs to be of type `i32`.&quot;);
 </span><span class="boring">
 </span><span class="boring">        // Get parameter
 </span><span class="boring">        let parameter = parameter
@@ -7160,7 +7089,7 @@ With <a href="../docs/gtk4/builders/struct.ButtonBuilder.html"><code>ButtonBuild
 </span><span class="boring">
 </span><span class="boring">        // Increase state by parameter and save state
 </span><span class="boring">        state += parameter;
-</span><span class="boring">        action.set_state(state.to_variant());
+</span><span class="boring">        action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">        // Update label with new state
 </span><span class="boring">        label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -7236,7 +7165,7 @@ Within the template we can then set the &quot;action-name&quot; and &quot;action
         let action_count = SimpleAction::new_stateful(
             &quot;count&quot;,
             Some(&amp;i32::static_variant_type()),
-            original_state.to_variant(),
+            &amp;original_state.to_variant(),
         );
 
         action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
@@ -7255,7 +7184,7 @@ Within the template we can then set the &quot;action-name&quot; and &quot;action
 
             // Increase state by parameter and save state
             state += parameter;
-            action.set_state(state.to_variant());
+            action.set_state(&amp;state.to_variant());
 
             // Update label with new state
             label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -7326,7 +7255,7 @@ Typically, a menu entry has an action fitting one of these three descriptions:</
 First we extend <code>setup_actions</code>.
 For the action without parameter or state, we can use the pre-defined &quot;window.close&quot; action.
 Therefore we don't have to add anything here.</p>
-<p>With the action &quot;sensitive-button&quot;, we manipulate the &quot;sensitive&quot; property of <code>button</code>.
+<p>With the action &quot;button-frame&quot;, we manipulate the &quot;has-frame&quot; property of <code>button</code>.
 Here, the convention is that actions with no parameter and boolean state should behave like toggle actions.
 This means that the caller can expect the boolean state to toggle after activating the action. Luckily for us, that is the default behavior for <a href="https://gtk-rs.org/gtk-rs-core/stable/latest/docs/gio/struct.PropertyAction.html"><code>gio::PropertyAction</code></a> with a boolean property.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/actions/6/window/mod.rs">listings/actions/6/window/mod.rs</a></p>
@@ -7360,7 +7289,7 @@ This means that the caller can expect the boolean state to toggle after activati
 </span><span class="boring">        let action_count = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;count&quot;,
 </span><span class="boring">            Some(&amp;i32::static_variant_type()),
-</span><span class="boring">            original_state.to_variant(),
+</span><span class="boring">            &amp;original_state.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
@@ -7379,18 +7308,18 @@ This means that the caller can expect the boolean state to toggle after activati
 </span><span class="boring">
 </span><span class="boring">            // Increase state by parameter and save state
 </span><span class="boring">            state += parameter;
-</span><span class="boring">            action.set_state(state.to_variant());
+</span><span class="boring">            action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">            // Update label with new state
 </span><span class="boring">            label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_count);
 </span><span class="boring">
-</span>        // Add property action &quot;sensitive-button&quot; to `window`
+</span>        // Add property action &quot;button-frame&quot; to `window`
         let button = self.imp().button.get();
-        let action_sensitive_button =
-            PropertyAction::new(&quot;sensitive-button&quot;, &amp;button, &quot;sensitive&quot;);
-        self.add_action(&amp;action_sensitive_button);
+        let action_button_frame =
+            PropertyAction::new(&quot;button-frame&quot;, &amp;button, &quot;has-frame&quot;);
+        self.add_action(&amp;action_button_frame);
 <span class="boring">
 </span><span class="boring">
 </span><span class="boring">        // Add stateful action &quot;orientation&quot; to `window` taking a string as parameter
@@ -7398,7 +7327,7 @@ This means that the caller can expect the boolean state to toggle after activati
 </span><span class="boring">        let action_orientation = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;orientation&quot;,
 </span><span class="boring">            Some(&amp;String::static_variant_type()),
-</span><span class="boring">            &quot;Vertical&quot;.to_variant(),
+</span><span class="boring">            &amp;&quot;Vertical&quot;.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_orientation.connect_activate(clone!(@weak gtk_box =&gt;
@@ -7417,7 +7346,7 @@ This means that the caller can expect the boolean state to toggle after activati
 </span><span class="boring">
 </span><span class="boring">                // Set orientation and save state
 </span><span class="boring">                gtk_box.set_orientation(orientation);
-</span><span class="boring">                action.set_state(parameter.to_variant());
+</span><span class="boring">                action.set_state(&amp;parameter.to_variant());
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_orientation);
 </span><span class="boring">    }
@@ -7464,7 +7393,7 @@ We don't need the action state to implement orientation switching, however it is
 </span><span class="boring">        let action_count = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;count&quot;,
 </span><span class="boring">            Some(&amp;i32::static_variant_type()),
-</span><span class="boring">            original_state.to_variant(),
+</span><span class="boring">            &amp;original_state.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
@@ -7483,18 +7412,18 @@ We don't need the action state to implement orientation switching, however it is
 </span><span class="boring">
 </span><span class="boring">            // Increase state by parameter and save state
 </span><span class="boring">            state += parameter;
-</span><span class="boring">            action.set_state(state.to_variant());
+</span><span class="boring">            action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">            // Update label with new state
 </span><span class="boring">            label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_count);
 </span><span class="boring">
-</span><span class="boring">        // Add property action &quot;sensitive-button&quot; to `window`
+</span><span class="boring">        // Add property action &quot;button-frame&quot; to `window`
 </span><span class="boring">        let button = self.imp().button.get();
-</span><span class="boring">        let action_sensitive_button =
-</span><span class="boring">            PropertyAction::new(&quot;sensitive-button&quot;, &amp;button, &quot;sensitive&quot;);
-</span><span class="boring">        self.add_action(&amp;action_sensitive_button);
+</span><span class="boring">        let action_button_frame =
+</span><span class="boring">            PropertyAction::new(&quot;button-frame&quot;, &amp;button, &quot;has-frame&quot;);
+</span><span class="boring">        self.add_action(&amp;action_button_frame);
 </span><span class="boring">
 </span>
         // Add stateful action &quot;orientation&quot; to `window` taking a string as parameter
@@ -7502,7 +7431,7 @@ We don't need the action state to implement orientation switching, however it is
         let action_orientation = SimpleAction::new_stateful(
             &quot;orientation&quot;,
             Some(&amp;String::static_variant_type()),
-            &quot;Vertical&quot;.to_variant(),
+            &amp;&quot;Vertical&quot;.to_variant(),
         );
 
         action_orientation.connect_activate(clone!(@weak gtk_box =&gt;
@@ -7521,7 +7450,7 @@ We don't need the action state to implement orientation switching, however it is
 
                 // Set orientation and save state
                 gtk_box.set_orientation(orientation);
-                action.set_state(parameter.to_variant());
+                action.set_state(&amp;parameter.to_variant());
         }));
         self.add_action(&amp;action_orientation);
 <span class="boring">    }
@@ -7537,8 +7466,8 @@ We do that by adding the menu in front of the template.</p>
 +      &lt;attribute name=&quot;action&quot;&gt;window.close&lt;/attribute&gt;
 +    &lt;/item&gt;
 +    &lt;item&gt;
-+      &lt;attribute name=&quot;label&quot; translatable=&quot;yes&quot;&gt;_Sensitive button&lt;/attribute&gt;
-+      &lt;attribute name=&quot;action&quot;&gt;win.sensitive-button&lt;/attribute&gt;
++      &lt;attribute name=&quot;label&quot; translatable=&quot;yes&quot;&gt;_Toggle button frame&lt;/attribute&gt;
++      &lt;attribute name=&quot;action&quot;&gt;win.button-frame&lt;/attribute&gt;
 +    &lt;/item&gt;
 +    &lt;section&gt;
 +      &lt;attribute name=&quot;label&quot; translatable=&quot;yes&quot;&gt;Orientation&lt;/attribute&gt;
@@ -7571,7 +7500,7 @@ We do that by adding the menu in front of the template.</p>
        &lt;object class=&quot;GtkBox&quot; id=&quot;gtk_box&quot;&gt;
          &lt;property name=&quot;orientation&quot;&gt;vertical&lt;/property&gt;
 </code></pre>
-<p>Since we connect the menu to the <a href="../docs/gtk4/struct.MenuButton.html"><code>gtk::MenuButton</code></a> via the <a href="https://docs.gtk.org/gtk4/property.MenuButton.menu-model.html">menu-model</a> property, the <code>Menu</code> is expected to be a <a href="../docs/gtk4/struct.PopoverMenu.html"><code>gtk::PopoverMenu</code></a>.
+<p>Since we connect the menu to the <a href="../docs/gtk4/struct.MenuButton.html"><code>gtk::MenuButton</code></a> via the <a href="../docs/gtk4/struct.MenuButton.html#menu-model">menu-model</a> property, the <code>Menu</code> is expected to be a <a href="../docs/gtk4/struct.PopoverMenu.html"><code>gtk::PopoverMenu</code></a>.
 The <a href="../docs/gtk4/struct.PopoverMenu.html">documentation</a> for <code>PopoverMenu</code> also explains its <code>xml</code> syntax for the interface builder.</p>
 <p>Also note how we specified the target:</p>
 <pre><code class="language-xml">&lt;attribute name=&quot;target&quot;&gt;Horizontal&lt;/attribute&gt;
@@ -7601,9 +7530,9 @@ First we create a schema with settings corresponding to the stateful actions we 
 <pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
 &lt;schemalist&gt;
   &lt;schema id=&quot;org.gtk_rs.Actions7&quot; path=&quot;/org/gtk_rs/Actions7/&quot;&gt;
-    &lt;key name=&quot;sensitive-button&quot; type=&quot;b&quot;&gt;
+    &lt;key name=&quot;button-frame&quot; type=&quot;b&quot;&gt;
       &lt;default&gt;true&lt;/default&gt;
-      &lt;summary&gt;Whether the button is sensitive&lt;/summary&gt;
+      &lt;summary&gt;Whether the button has a frame&lt;/summary&gt;
     &lt;/key&gt;
     &lt;key name=&quot;orientation&quot; type=&quot;s&quot;&gt;
       &lt;choices&gt;
@@ -7727,16 +7656,16 @@ pub struct Window {
 </span><span class="boring">        let action_count = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;count&quot;,
 </span><span class="boring">            Some(&amp;i32::static_variant_type()),
-</span><span class="boring">            original_state.to_variant(),
+</span><span class="boring">            &amp;original_state.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
 </span><span class="boring">            // Get state
 </span><span class="boring">            let mut state = action
-</span><span class="boring">            .state()
-</span><span class="boring">            .expect(&quot;Could not get state.&quot;)
-</span><span class="boring">            .get::&lt;i32&gt;()
-</span><span class="boring">            .expect(&quot;The variant needs to be of type `i32`.&quot;);
+</span><span class="boring">                .state()
+</span><span class="boring">                .expect(&quot;Could not get state.&quot;)
+</span><span class="boring">                .get::&lt;i32&gt;()
+</span><span class="boring">                .expect(&quot;The variant needs to be of type `i32`.&quot;);
 </span><span class="boring">
 </span><span class="boring">            // Get parameter
 </span><span class="boring">            let parameter = parameter
@@ -7746,7 +7675,7 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">            // Increase state by parameter and save state
 </span><span class="boring">            state += parameter;
-</span><span class="boring">            action.set_state(state.to_variant());
+</span><span class="boring">            action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">            // Update label with new state
 </span><span class="boring">            label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -7761,9 +7690,9 @@ pub struct Window {
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_close);
 </span><span class="boring">
-</span><span class="boring">        // Create action from key &quot;sensitive-button&quot; and add to action group &quot;win&quot;
-</span><span class="boring">        let action_sensitive_button = self.settings().create_action(&quot;sensitive-button&quot;);
-</span><span class="boring">        self.add_action(&amp;action_sensitive_button);
+</span><span class="boring">        // Create action from key &quot;button-frame&quot; and add to action group &quot;win&quot;
+</span><span class="boring">        let action_button_frame = self.settings().create_action(&quot;button-frame&quot;);
+</span><span class="boring">        self.add_action(&amp;action_button_frame);
 </span><span class="boring">
 </span><span class="boring">        // Create action from key &quot;orientation&quot; and add to action group &quot;win&quot;
 </span><span class="boring">        let action_orientation = self.settings().create_action(&quot;orientation&quot;);
@@ -7773,10 +7702,10 @@ pub struct Window {
 </span><span class="boring">    fn bind_settings(&amp;self) {
 </span><span class="boring">        // Get state
 </span><span class="boring">
-</span><span class="boring">        // Bind setting &quot;sensitive-button&quot; to &quot;sensitive&quot; property of `button`
+</span><span class="boring">        // Bind setting &quot;button-frame&quot; to &quot;has-frame&quot; property of `button`
 </span><span class="boring">        let button = self.imp().button.get();
 </span><span class="boring">        self.settings()
-</span><span class="boring">            .bind(&quot;sensitive-button&quot;, &amp;button, &quot;sensitive&quot;)
+</span><span class="boring">            .bind(&quot;button-frame&quot;, &amp;button, &quot;has-frame&quot;)
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Bind setting &quot;orientation&quot; to &quot;orientation&quot; property of `button`
@@ -7849,16 +7778,16 @@ We create actions with the<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/
 </span><span class="boring">        let action_count = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;count&quot;,
 </span><span class="boring">            Some(&amp;i32::static_variant_type()),
-</span><span class="boring">            original_state.to_variant(),
+</span><span class="boring">            &amp;original_state.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
 </span><span class="boring">            // Get state
 </span><span class="boring">            let mut state = action
-</span><span class="boring">            .state()
-</span><span class="boring">            .expect(&quot;Could not get state.&quot;)
-</span><span class="boring">            .get::&lt;i32&gt;()
-</span><span class="boring">            .expect(&quot;The variant needs to be of type `i32`.&quot;);
+</span><span class="boring">                .state()
+</span><span class="boring">                .expect(&quot;Could not get state.&quot;)
+</span><span class="boring">                .get::&lt;i32&gt;()
+</span><span class="boring">                .expect(&quot;The variant needs to be of type `i32`.&quot;);
 </span><span class="boring">
 </span><span class="boring">            // Get parameter
 </span><span class="boring">            let parameter = parameter
@@ -7868,7 +7797,7 @@ We create actions with the<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/
 </span><span class="boring">
 </span><span class="boring">            // Increase state by parameter and save state
 </span><span class="boring">            state += parameter;
-</span><span class="boring">            action.set_state(state.to_variant());
+</span><span class="boring">            action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">            // Update label with new state
 </span><span class="boring">            label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -7883,9 +7812,9 @@ We create actions with the<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_close);
 </span><span class="boring">
-</span>        // Create action from key &quot;sensitive-button&quot; and add to action group &quot;win&quot;
-        let action_sensitive_button = self.settings().create_action(&quot;sensitive-button&quot;);
-        self.add_action(&amp;action_sensitive_button);
+</span>        // Create action from key &quot;button-frame&quot; and add to action group &quot;win&quot;
+        let action_button_frame = self.settings().create_action(&quot;button-frame&quot;);
+        self.add_action(&amp;action_button_frame);
 
         // Create action from key &quot;orientation&quot; and add to action group &quot;win&quot;
         let action_orientation = self.settings().create_action(&quot;orientation&quot;);
@@ -7895,10 +7824,10 @@ We create actions with the<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/
 </span><span class="boring">    fn bind_settings(&amp;self) {
 </span><span class="boring">        // Get state
 </span><span class="boring">
-</span><span class="boring">        // Bind setting &quot;sensitive-button&quot; to &quot;sensitive&quot; property of `button`
+</span><span class="boring">        // Bind setting &quot;button-frame&quot; to &quot;has-frame&quot; property of `button`
 </span><span class="boring">        let button = self.imp().button.get();
 </span><span class="boring">        self.settings()
-</span><span class="boring">            .bind(&quot;sensitive-button&quot;, &amp;button, &quot;sensitive&quot;)
+</span><span class="boring">            .bind(&quot;button-frame&quot;, &amp;button, &quot;has-frame&quot;)
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Bind setting &quot;orientation&quot; to &quot;orientation&quot; property of `button`
@@ -7922,7 +7851,7 @@ We create actions with the<a href="https://gtk-rs.org/gtk-rs-core/stable/latest/
 </span><span class="boring">    }
 </span><span class="boring">}</span></code></pre>
 <p>Since actions from <code>create_action</code> follow the aforementioned conventions, we can keep further changes to a minimum.
-The action &quot;win.sensitive-button&quot; toggles its state with each activation and the state of the &quot;win.orientation&quot; action follows the given parameter.</p>
+The action &quot;win.button-frame&quot; toggles its state with each activation and the state of the &quot;win.orientation&quot; action follows the given parameter.</p>
 <p>We still have to specify what should happen when the actions are activated though.
 For the stateful actions, instead of adding callbacks to their &quot;activate&quot; signals we bind the settings to properties we want to manipulate.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/actions/7/window/mod.rs">listings/actions/7/window/mod.rs</a></p>
@@ -7973,16 +7902,16 @@ For the stateful actions, instead of adding callbacks to their &quot;activate&qu
 </span><span class="boring">        let action_count = SimpleAction::new_stateful(
 </span><span class="boring">            &quot;count&quot;,
 </span><span class="boring">            Some(&amp;i32::static_variant_type()),
-</span><span class="boring">            original_state.to_variant(),
+</span><span class="boring">            &amp;original_state.to_variant(),
 </span><span class="boring">        );
 </span><span class="boring">
 </span><span class="boring">        action_count.connect_activate(clone!(@weak label =&gt; move |action, parameter| {
 </span><span class="boring">            // Get state
 </span><span class="boring">            let mut state = action
-</span><span class="boring">            .state()
-</span><span class="boring">            .expect(&quot;Could not get state.&quot;)
-</span><span class="boring">            .get::&lt;i32&gt;()
-</span><span class="boring">            .expect(&quot;The variant needs to be of type `i32`.&quot;);
+</span><span class="boring">                .state()
+</span><span class="boring">                .expect(&quot;Could not get state.&quot;)
+</span><span class="boring">                .get::&lt;i32&gt;()
+</span><span class="boring">                .expect(&quot;The variant needs to be of type `i32`.&quot;);
 </span><span class="boring">
 </span><span class="boring">            // Get parameter
 </span><span class="boring">            let parameter = parameter
@@ -7992,7 +7921,7 @@ For the stateful actions, instead of adding callbacks to their &quot;activate&qu
 </span><span class="boring">
 </span><span class="boring">            // Increase state by parameter and save state
 </span><span class="boring">            state += parameter;
-</span><span class="boring">            action.set_state(state.to_variant());
+</span><span class="boring">            action.set_state(&amp;state.to_variant());
 </span><span class="boring">
 </span><span class="boring">            // Update label with new state
 </span><span class="boring">            label.set_label(&amp;format!(&quot;Counter: {state}&quot;));
@@ -8007,9 +7936,9 @@ For the stateful actions, instead of adding callbacks to their &quot;activate&qu
 </span><span class="boring">        }));
 </span><span class="boring">        self.add_action(&amp;action_close);
 </span><span class="boring">
-</span><span class="boring">        // Create action from key &quot;sensitive-button&quot; and add to action group &quot;win&quot;
-</span><span class="boring">        let action_sensitive_button = self.settings().create_action(&quot;sensitive-button&quot;);
-</span><span class="boring">        self.add_action(&amp;action_sensitive_button);
+</span><span class="boring">        // Create action from key &quot;button-frame&quot; and add to action group &quot;win&quot;
+</span><span class="boring">        let action_button_frame = self.settings().create_action(&quot;button-frame&quot;);
+</span><span class="boring">        self.add_action(&amp;action_button_frame);
 </span><span class="boring">
 </span><span class="boring">        // Create action from key &quot;orientation&quot; and add to action group &quot;win&quot;
 </span><span class="boring">        let action_orientation = self.settings().create_action(&quot;orientation&quot;);
@@ -8019,10 +7948,10 @@ For the stateful actions, instead of adding callbacks to their &quot;activate&qu
 </span>    fn bind_settings(&amp;self) {
         // Get state
 
-        // Bind setting &quot;sensitive-button&quot; to &quot;sensitive&quot; property of `button`
+        // Bind setting &quot;button-frame&quot; to &quot;has-frame&quot; property of `button`
         let button = self.imp().button.get();
         self.settings()
-            .bind(&quot;sensitive-button&quot;, &amp;button, &quot;sensitive&quot;)
+            .bind(&quot;button-frame&quot;, &amp;button, &quot;has-frame&quot;)
             .build();
 
         // Bind setting &quot;orientation&quot; to &quot;orientation&quot; property of `button`
@@ -8194,9 +8123,7 @@ Then we add a reference to <code>settings</code> to <code>imp::Window</code>.</p
 </span><span class="boring">use std::fs::File;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
-</span><span class="boring">use gtk::glib::Cast;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, CompositeTemplate, Entry, ListView};
@@ -8256,15 +8183,14 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -8373,7 +8299,7 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -8657,7 +8583,7 @@ We also add an action which allows us to remove done tasks. </p>
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -8903,7 +8829,7 @@ If the state is &quot;All&quot; nothing has to be filtered out, so we return <co
 <span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -9147,7 +9073,7 @@ Whenever the state of the key &quot;filter&quot; changes, we call the method <co
 </span><span class="boring">
 </span>    fn setup_tasks(&amp;self) {
         // Create new model
-        let model = gio::ListStore::new(TaskObject::static_type());
+        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 
         // Get state and set model
         self.imp().tasks.replace(Some(model));
@@ -9494,9 +9420,7 @@ Then we serialize the <code>Vec</code> and store the data as a json file.</p>
 </span><span class="boring">use std::fs::File;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
-</span><span class="boring">use gtk::glib::Cast;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, CompositeTemplate, Entry, ListView};
@@ -9556,15 +9480,14 @@ Then we serialize the <code>Vec</code> and store the data as a json file.</p>
 </span><span class="boring">
 </span>// Trait shared by all windows
 impl WindowImpl for Window {
-    fn close_request(&amp;self) -&gt; Inhibit {
+    fn close_request(&amp;self) -&gt; glib::ControlFlow {
         // Store task data in vector
         let backup_data: Vec&lt;TaskData&gt; = self
             .obj()
             .tasks()
-            .snapshot()
-            .iter()
-            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-            .map(TaskObject::task_data)
+            .iter::&lt;TaskObject&gt;()
+            .filter_map(Result::ok)
+            .map(|task_object| task_object.task_data())
             .collect();
 
         // Save state to file
@@ -9703,7 +9626,7 @@ It might be the first time that we started the app and therefore there is no for
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -9857,9 +9780,7 @@ It might be the first time that we started the app and therefore there is no for
 </span><span class="boring">use std::fs::File;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
-</span><span class="boring">use gtk::glib::Cast;
 </span><span class="boring">use gtk::prelude::*;
 </span><span class="boring">use gtk::subclass::prelude::*;
 </span><span class="boring">use gtk::{gio, glib, CompositeTemplate, Entry, ListView};
@@ -9919,15 +9840,14 @@ impl ObjectImpl for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -9966,9 +9886,7 @@ As usual, the widgets are created during the &quot;activate&quot; step.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/css/1/main.rs">listings/css/1/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gdk::Display;
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{
-</span><span class="boring">    gdk, glib, Application, ApplicationWindow, Button, CssProvider, StyleContext,
-</span><span class="boring">};
+</span><span class="boring">use gtk::{gdk, glib, Application, ApplicationWindow, Button, CssProvider};
 </span><span class="boring">
 </span>const APP_ID: &amp;str = &quot;org.gtk_rs.Css1&quot;;
 
@@ -9990,7 +9908,7 @@ fn load_css() {
     provider.load_from_data(include_str!(&quot;style.css&quot;));
 
     // Add the provider to the default screen
-    StyleContext::add_provider_for_display(
+    gtk::style_context_add_provider_for_display(
         &amp;Display::default().expect(&quot;Could not connect to a display.&quot;),
         &amp;provider,
         gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
@@ -10051,9 +9969,7 @@ Which is why we add the style class <code>button-1</code> to the first one.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/css/3/main.rs">listings/css/3/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gdk::Display;
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{
-</span><span class="boring">    gdk, glib, Application, ApplicationWindow, Button, CssProvider, StyleContext,
-</span><span class="boring">};
+</span><span class="boring">use gtk::{gdk, glib, Application, ApplicationWindow, Button, CssProvider};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.Css3&quot;;
 </span><span class="boring">
@@ -10075,7 +9991,7 @@ Which is why we add the style class <code>button-1</code> to the first one.</p>
 </span><span class="boring">    provider.load_from_data(include_str!(&quot;style.css&quot;));
 </span><span class="boring">
 </span><span class="boring">    // Add the provider to the default screen
-</span><span class="boring">    StyleContext::add_provider_for_display(
+</span><span class="boring">    gtk::style_context_add_provider_for_display(
 </span><span class="boring">        &amp;Display::default().expect(&quot;Could not connect to a display.&quot;),
 </span><span class="boring">        &amp;provider,
 </span><span class="boring">        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
@@ -10125,9 +10041,7 @@ We set the name of the first one with <a href="../docs/gtk4/prelude/trait.Widget
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/css/4/main.rs">listings/css/4/main.rs</a></p>
 <pre><code class="language-rust  no_run noplayground"><span class="boring">use gdk::Display;
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{
-</span><span class="boring">    gdk, glib, Application, ApplicationWindow, Button, CssProvider, StyleContext,
-</span><span class="boring">};
+</span><span class="boring">use gtk::{gdk, glib, Application, ApplicationWindow, Button, CssProvider};
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.Css4&quot;;
 </span><span class="boring">
@@ -10149,7 +10063,7 @@ We set the name of the first one with <a href="../docs/gtk4/prelude/trait.Widget
 </span><span class="boring">    provider.load_from_data(include_str!(&quot;style.css&quot;));
 </span><span class="boring">
 </span><span class="boring">    // Add the provider to the default screen
-</span><span class="boring">    StyleContext::add_provider_for_display(
+</span><span class="boring">    gtk::style_context_add_provider_for_display(
 </span><span class="boring">        &amp;Display::default().expect(&quot;Could not connect to a display.&quot;),
 </span><span class="boring">        &amp;provider,
 </span><span class="boring">        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
@@ -10443,7 +10357,7 @@ We can then access the pre-defined color by adding an <code>@</code> in front of
 </span><span class="boring">
 </span><span class="boring">use gdk::Display;
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{gdk, gio, glib, Application, CssProvider, StyleContext};
+</span><span class="boring">use gtk::{gdk, gio, glib, Application, CssProvider};
 </span><span class="boring">use window::Window;
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.Todo3&quot;;
@@ -10478,7 +10392,7 @@ We can then access the pre-defined color by adding an <code>@</code> in front of
 </span><span class="boring">    provider.load_from_resource(&quot;/org/gtk_rs/Todo3/style.css&quot;);
 </span><span class="boring">
 </span><span class="boring">    // Add the provider to the default screen
-</span><span class="boring">    StyleContext::add_provider_for_display(
+</span><span class="boring">    gtk::style_context_add_provider_for_display(
 </span><span class="boring">        &amp;Display::default().expect(&quot;Could not connect to a display.&quot;),
 </span><span class="boring">        &amp;provider,
 </span><span class="boring">        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
@@ -10499,7 +10413,7 @@ However, this time we load styles using <code>load_from_resource()</code>.</p>
 </span><span class="boring">
 </span><span class="boring">use gdk::Display;
 </span><span class="boring">use gtk::prelude::*;
-</span><span class="boring">use gtk::{gdk, gio, glib, Application, CssProvider, StyleContext};
+</span><span class="boring">use gtk::{gdk, gio, glib, Application, CssProvider};
 </span><span class="boring">use window::Window;
 </span><span class="boring">
 </span><span class="boring">const APP_ID: &amp;str = &quot;org.gtk_rs.Todo3&quot;;
@@ -10534,7 +10448,7 @@ However, this time we load styles using <code>load_from_resource()</code>.</p>
     provider.load_from_resource(&quot;/org/gtk_rs/Todo3/style.css&quot;);
 
     // Add the provider to the default screen
-    StyleContext::add_provider_for_display(
+    gtk::style_context_add_provider_for_display(
         &amp;Display::default().expect(&quot;Could not connect to a display.&quot;),
         &amp;provider,
         gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
@@ -10767,7 +10681,7 @@ fn build_ui(app: &amp;adw::Application) {
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -10991,7 +10905,6 @@ The member variable <code>tasks_list</code> now describes a <code>ListBox</code>
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -11051,15 +10964,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -11088,7 +11000,6 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -11166,7 +11077,7 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -11240,11 +11151,12 @@ There we specify the model, as well as a closure describing how to transform the
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -11323,7 +11235,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -11401,7 +11312,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -11475,11 +11386,12 @@ That means we can just bind their properties without having to worry about unbin
         // Bind properties
         task_object
             .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+            .bidirectional()
+            .sync_create()
             .build();
         task_object
             .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-            .flags(BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
 
         // Return row
@@ -11555,7 +11467,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -11633,7 +11544,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -11707,11 +11618,12 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -11787,7 +11699,6 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -11865,7 +11776,7 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -11939,11 +11850,12 @@ That means we can just bind their properties without having to worry about unbin
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -12153,7 +12065,6 @@ For example, the parent type of our window is now <code>adw::ApplicationWindow</
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -12214,15 +12125,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -12248,7 +12158,6 @@ impl ObjectSubclass for Window {
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
@@ -12309,15 +12218,14 @@ impl ObjectSubclass for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;TaskData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -12345,7 +12253,6 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">use adw::{prelude::*, ActionRow};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{gio, glib, Align, CheckButton, CustomFilter, FilterListModel, NoSelection};
 </span><span class="boring">
 </span><span class="boring">use crate::task_object::{TaskData, TaskObject};
@@ -12424,7 +12331,7 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">
 </span><span class="boring">    fn setup_tasks(&amp;self) {
 </span><span class="boring">        // Create new model
-</span><span class="boring">        let model = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let model = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">        // Get state and set model
 </span><span class="boring">        self.imp().tasks.replace(Some(model));
@@ -12498,11 +12405,12 @@ impl AdwApplicationWindowImpl for Window {}</code></pre>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -12665,7 +12573,7 @@ As usual, the full implementation can be seen by clicking at the eye symbol at t
 </span><span class="boring">
 </span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
-</span><span class="boring">use glib::{ParamSpec, Properties, Value};
+</span><span class="boring">use glib::Properties;
 </span><span class="boring">use gtk::{gio, glib};
 </span><span class="boring">use once_cell::sync::OnceCell;
 </span><span class="boring">
@@ -12687,24 +12595,13 @@ impl ObjectSubclass for CollectionObject {
 }
 <span class="boring">
 </span><span class="boring">// Trait shared by all GObjects
-</span><span class="boring">impl ObjectImpl for CollectionObject {
-</span><span class="boring">    fn properties() -&gt; &amp;'static [ParamSpec] {
-</span><span class="boring">        Self::derived_properties()
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn set_property(&amp;self, id: usize, value: &amp;Value, pspec: &amp;ParamSpec) {
-</span><span class="boring">        self.derived_set_property(id, value, pspec)
-</span><span class="boring">    }
-</span><span class="boring">
-</span><span class="boring">    fn property(&amp;self, id: usize, pspec: &amp;ParamSpec) -&gt; Value {
-</span><span class="boring">        self.derived_property(id, pspec)
-</span><span class="boring">    }
-</span><span class="boring">}</span></code></pre>
+</span><span class="boring">#[glib::derived_properties]
+</span><span class="boring">impl ObjectImpl for CollectionObject {}</span></code></pre>
 <p>We also add the struct <code>CollectionData</code> to aid in serialization and deserialization.</p>
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/8/collection_object/mod.rs">listings/todo/8/collection_object/mod.rs</a></p>
 <pre><code class="language-rust no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use adw::prelude::{ListModelExtManual, *};
+</span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::{gio, glib};
@@ -12728,12 +12625,10 @@ impl ObjectSubclass for CollectionObject {
 </span><span class="boring">        let title = self.imp().title.borrow().clone();
 </span><span class="boring">        let tasks_data = self
 </span><span class="boring">            .tasks()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-</span><span class="boring">            .map(TaskObject::task_data)
+</span><span class="boring">            .iter::&lt;TaskObject&gt;()
+</span><span class="boring">            .filter_map(Result::ok)
+</span><span class="boring">            .map(|task_object| task_object.task_data())
 </span><span class="boring">            .collect();
-</span><span class="boring">
 </span><span class="boring">        CollectionData { title, tasks_data }
 </span><span class="boring">    }
 </span><span class="boring">
@@ -12745,7 +12640,7 @@ impl ObjectSubclass for CollectionObject {
 </span><span class="boring">            .map(TaskObject::from_task_data)
 </span><span class="boring">            .collect();
 </span><span class="boring">
-</span><span class="boring">        let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">        let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">        tasks.extend_from_slice(&amp;tasks_to_extend);
 </span><span class="boring">
 </span><span class="boring">        Self::new(&amp;title, tasks)
@@ -12766,7 +12661,7 @@ pub struct CollectionData {
 <p>Filename: <a class=file-link href="https://github.com/gtk-rs/gtk4-rs/blob/master/book/listings/todo/8/collection_object/mod.rs">listings/todo/8/collection_object/mod.rs</a></p>
 <pre><code class="language-rust no_run noplayground"><span class="boring">mod imp;
 </span><span class="boring">
-</span><span class="boring">use adw::prelude::{ListModelExtManual, *};
+</span><span class="boring">use adw::prelude::*;
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use glib::Object;
 </span><span class="boring">use gtk::{gio, glib};
@@ -12790,12 +12685,10 @@ pub struct CollectionData {
         let title = self.imp().title.borrow().clone();
         let tasks_data = self
             .tasks()
-            .snapshot()
-            .iter()
-            .filter_map(Cast::downcast_ref::&lt;TaskObject&gt;)
-            .map(TaskObject::task_data)
+            .iter::&lt;TaskObject&gt;()
+            .filter_map(Result::ok)
+            .map(|task_object| task_object.task_data())
             .collect();
-
         CollectionData { title, tasks_data }
     }
 
@@ -12807,7 +12700,7 @@ pub struct CollectionData {
             .map(TaskObject::from_task_data)
             .collect();
 
-        let tasks = gio::ListStore::new(TaskObject::static_type());
+        let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
         tasks.extend_from_slice(&amp;tasks_to_extend);
 
         Self::new(&amp;title, tasks)
@@ -12833,7 +12726,6 @@ Its purpose will become clear in later snippets.</p>
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -12906,15 +12798,14 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;CollectionData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .collections()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-</span><span class="boring">            .map(CollectionObject::to_collection_data)
+</span><span class="boring">            .iter::&lt;CollectionObject&gt;()
+</span><span class="boring">            .filter_map(|collection_object| collection_object.ok())
+</span><span class="boring">            .map(|collection_object| collection_object.to_collection_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -12943,7 +12834,6 @@ pub struct Window {
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -13045,7 +12935,7 @@ pub struct Window {
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -13098,7 +12988,7 @@ pub struct Window {
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -13172,11 +13062,12 @@ pub struct Window {
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -13364,7 +13255,7 @@ pub struct Window {
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -13391,7 +13282,6 @@ Since most of the implementation is in the method <code>CollectionObject::to_col
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -13464,15 +13354,14 @@ Since most of the implementation is in the method <code>CollectionObject::to_col
 </span><span class="boring">
 </span>// Trait shared by all windows
 impl WindowImpl for Window {
-    fn close_request(&amp;self) -&gt; Inhibit {
+    fn close_request(&amp;self) -&gt; glib::ControlFlow {
         // Store task data in vector
         let backup_data: Vec&lt;CollectionData&gt; = self
             .obj()
             .collections()
-            .snapshot()
-            .iter()
-            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-            .map(CollectionObject::to_collection_data)
+            .iter::&lt;CollectionObject&gt;()
+            .filter_map(|collection_object| collection_object.ok())
+            .map(|collection_object| collection_object.to_collection_data())
             .collect();
 
         // Save state to file
@@ -13500,7 +13389,6 @@ Instead of <code>setup_tasks</code> we now call <code>setup_collections</code>.<
 </span><span class="boring">use adw::subclass::prelude::*;
 </span><span class="boring">use adw::Leaflet;
 </span><span class="boring">use gio::Settings;
-</span><span class="boring">use glib::signal::Inhibit;
 </span><span class="boring">use glib::subclass::InitializingObject;
 </span><span class="boring">use gtk::glib::SignalHandlerId;
 </span><span class="boring">use gtk::{
@@ -13573,15 +13461,14 @@ impl ObjectImpl for Window {
 </span><span class="boring">
 </span><span class="boring">// Trait shared by all windows
 </span><span class="boring">impl WindowImpl for Window {
-</span><span class="boring">    fn close_request(&amp;self) -&gt; Inhibit {
+</span><span class="boring">    fn close_request(&amp;self) -&gt; glib::ControlFlow {
 </span><span class="boring">        // Store task data in vector
 </span><span class="boring">        let backup_data: Vec&lt;CollectionData&gt; = self
 </span><span class="boring">            .obj()
 </span><span class="boring">            .collections()
-</span><span class="boring">            .snapshot()
-</span><span class="boring">            .iter()
-</span><span class="boring">            .filter_map(Cast::downcast_ref::&lt;CollectionObject&gt;)
-</span><span class="boring">            .map(CollectionObject::to_collection_data)
+</span><span class="boring">            .iter::&lt;CollectionObject&gt;()
+</span><span class="boring">            .filter_map(|collection_object| collection_object.ok())
+</span><span class="boring">            .map(|collection_object| collection_object.to_collection_data())
 </span><span class="boring">            .collect();
 </span><span class="boring">
 </span><span class="boring">        // Save state to file
@@ -13611,7 +13498,6 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -13713,7 +13599,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span>    fn setup_collections(&amp;self) {
-        let collections = gio::ListStore::new(CollectionObject::static_type());
+        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
         self.imp()
             .collections
             .set(collections.clone())
@@ -13766,7 +13652,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -13840,11 +13726,12 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -14032,7 +13919,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -14060,7 +13947,6 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -14162,7 +14048,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -14215,7 +14101,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 
         collection_object
             .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-            .flags(glib::BindingFlags::SYNC_CREATE)
+            .sync_create()
             .build();
 
         ListBoxRow::builder().child(&amp;label).build()
@@ -14289,11 +14175,12 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -14481,7 +14368,7 @@ To do that it uses the method <code>create_collection_row</code>.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -14512,7 +14399,6 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -14614,7 +14500,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -14667,7 +14553,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -14741,11 +14627,12 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -14933,7 +14820,7 @@ We choose the first one and let the method <code>set_current_collection</code> d
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -14967,7 +14854,6 @@ Finally, we select the collection row.</p>
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -15069,7 +14955,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -15122,7 +15008,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -15196,11 +15082,12 @@ Finally, we select the collection row.</p>
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -15388,7 +15275,7 @@ Finally, we select the collection row.</p>
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -15417,7 +15304,6 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -15519,7 +15405,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -15572,7 +15458,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -15646,11 +15532,12 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -15838,7 +15725,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -15866,7 +15753,6 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -15968,7 +15854,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -16021,7 +15907,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -16095,11 +15981,12 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -16287,7 +16174,7 @@ It assures that <code>tasks_list</code> is only visible if the number of tasks i
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -16332,7 +16219,6 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -16434,7 +16320,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -16487,7 +16373,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -16561,11 +16447,12 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -16753,7 +16640,7 @@ This action will be activated by a click on the <code>+</code> button as well as
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -16787,7 +16674,6 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -16889,7 +16775,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -16942,7 +16828,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -17016,11 +16902,12 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -17208,7 +17095,7 @@ Afterwards we navigate forward on our leaflet, which means we navigate to the ta
                 }
 
                 // Create a new list store
-                let tasks = gio::ListStore::new(TaskObject::static_type());
+                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 
                 // Create a new collection object from the title the user provided
                 let title = entry.text().to_string();
@@ -17242,7 +17129,6 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -17344,7 +17230,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -17397,7 +17283,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -17471,11 +17357,12 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -17663,7 +17550,7 @@ Finally, we connect to a click of the <code>back_button</code> in the task view 
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
@@ -17692,7 +17579,6 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">use adw::{ActionRow, MessageDialog, NavigationDirection, ResponseAppearance};
 </span><span class="boring">use gio::Settings;
 </span><span class="boring">use glib::{clone, Object};
-</span><span class="boring">use gtk::glib::BindingFlags;
 </span><span class="boring">use gtk::{
 </span><span class="boring">    gio, glib, pango, Align, CheckButton, CustomFilter, Entry, FilterListModel, Label,
 </span><span class="boring">    ListBoxRow, NoSelection, SelectionMode,
@@ -17794,7 +17680,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">    }
 </span><span class="boring">
 </span><span class="boring">    fn setup_collections(&amp;self) {
-</span><span class="boring">        let collections = gio::ListStore::new(CollectionObject::static_type());
+</span><span class="boring">        let collections = gio::ListStore::new::&lt;CollectionObject&gt;();
 </span><span class="boring">        self.imp()
 </span><span class="boring">            .collections
 </span><span class="boring">            .set(collections.clone())
@@ -17847,7 +17733,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">
 </span><span class="boring">        collection_object
 </span><span class="boring">            .bind_property(&quot;title&quot;, &amp;label, &quot;label&quot;)
-</span><span class="boring">            .flags(glib::BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        ListBoxRow::builder().child(&amp;label).build()
@@ -17921,11 +17807,12 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">        // Bind properties
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;completed&quot;, &amp;check_button, &quot;active&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE | BindingFlags::BIDIRECTIONAL)
+</span><span class="boring">            .bidirectional()
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">        task_object
 </span><span class="boring">            .bind_property(&quot;content&quot;, &amp;row, &quot;title&quot;)
-</span><span class="boring">            .flags(BindingFlags::SYNC_CREATE)
+</span><span class="boring">            .sync_create()
 </span><span class="boring">            .build();
 </span><span class="boring">
 </span><span class="boring">        // Return row
@@ -18113,7 +18000,7 @@ This method ensure when there is at least one collection, the &quot;main&quot; p
 </span><span class="boring">                }
 </span><span class="boring">
 </span><span class="boring">                // Create a new list store
-</span><span class="boring">                let tasks = gio::ListStore::new(TaskObject::static_type());
+</span><span class="boring">                let tasks = gio::ListStore::new::&lt;TaskObject&gt;();
 </span><span class="boring">
 </span><span class="boring">                // Create a new collection object from the title the user provided
 </span><span class="boring">                let title = entry.text().to_string();
